@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { CONFIG } from '../config/love.config'
+import { CONFIG, asset } from '../config/love.config'
 import { daysSince } from '../lib/date'
 import FloatingHearts from './FloatingHearts'
 import {
@@ -14,7 +14,7 @@ import {
 const CARDS = [
   { key: 'jigsaw', title: 'จิ๊กซอว์', desc: 'ต่อภาพของเรา', Icon: IcJigsaw },
   { key: 'scratch', title: 'ขูดหัวใจ', desc: 'ขูดดูเซอร์ไพรส์', Icon: IcScratch },
-  { key: 'days', title: 'นับวันรัก', desc: 'เราคบกันกี่วันแล้ว', Icon: IcCalendar },
+  { key: 'days', title: 'นับวันรัก', desc: 'รู้จักกันกี่วันแล้ว', Icon: IcCalendar },
   { key: 'gacha', title: 'ตู้กาชา', desc: 'สุ่มคำจากใจ', Icon: IcGacha },
   { key: 'letter', title: 'ซองจดหมาย', desc: 'เปิดอ่านนะ', Icon: IcLetter },
   { key: 'gallery', title: 'แกลเลอรีหัวใจ', desc: 'ความทรงจำ 3D', Icon: IcGallery },
@@ -31,6 +31,24 @@ export default function Portal({ onOpen }) {
         paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)',
       }}
     >
+      {/* พื้นหลังรูปจาง ๆ */}
+      {CONFIG.portal?.bg && (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+          <img
+            src={asset(CONFIG.portal.bg)}
+            alt=""
+            className="h-full w-full object-cover opacity-25"
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(to bottom, rgba(255,246,242,.70) 0%, rgba(255,246,242,.86) 45%, rgba(255,246,242,.95) 100%)',
+            }}
+          />
+        </div>
+      )}
+
       <FloatingHearts count={9} />
 
       <div className="relative z-10 px-5">
@@ -51,12 +69,12 @@ export default function Portal({ onOpen }) {
             วันที่ {days.toLocaleString('th-TH')} ของเรา
           </motion.div>
 
-          <h1 className="mt-3 font-display text-[26px] text-wine">
-            {CONFIG.coupleNames.me}{' '}
-            <span className="text-cherry">&amp;</span>{' '}
-            {CONFIG.coupleNames.you}
+          <h1 className="mt-3 font-display text-[24px] leading-snug text-wine">
+            {CONFIG.portal?.heading ?? `${CONFIG.coupleNames.me} & ${CONFIG.coupleNames.you}`}
           </h1>
-          <p className="mt-1 text-sm text-wine/60">เลือกของขวัญที่อยากเปิดเลยนะ 🎁</p>
+          <p className="mt-1 text-sm text-wine/60">
+            {CONFIG.portal?.subtitle ?? 'เลือกของขวัญที่อยากเปิดเลยนะ 🎁'}
+          </p>
         </header>
 
         {/* Grid 2×3 */}

@@ -47,6 +47,25 @@ export function breakdown(anniversaryISO) {
   return { years: Math.max(0, years), months: Math.max(0, months), days: Math.max(0, days) }
 }
 
+// แตกเป็น "ปีเต็ม + วันที่เหลือ" (เช่น 2 ปี 296 วัน)
+export function yearsAndDays(anniversaryISO) {
+  const [sy, sm, sd] = anniversaryISO.split('-').map(Number)
+  const { y: ny, m: nm, day: nd } = bangkokParts()
+
+  // หาจำนวนปีเต็มที่ผ่านมา
+  let years = ny - sy
+  // ถ้ายังไม่ถึงวันครบรอบของปีนี้ ให้ลดลง 1
+  if (nm < sm || (nm === sm && nd < sd)) years -= 1
+  years = Math.max(0, years)
+
+  // วันครบรอบล่าสุด (start + years ปี)
+  const lastAnniv = Date.UTC(sy + years, sm - 1, sd)
+  const today = Date.UTC(ny, nm - 1, nd)
+  const days = Math.max(0, Math.floor((today - lastAnniv) / 86400000))
+
+  return { years, days }
+}
+
 export function todayBangkok() {
   return bangkokParts()
 }

@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { CONFIG } from '../config/love.config'
 import {
   daysSince,
-  breakdown,
+  yearsAndDays,
   todayBangkok,
   TH_MONTHS,
   TH_DOW,
@@ -37,11 +37,11 @@ function useCountUp(target, duration = 1500) {
 export default function DaysCounter({ onBack }) {
   const total = daysSince(CONFIG.anniversaryDate)
   const shown = useCountUp(total)
-  const bd = breakdown(CONFIG.anniversaryDate)
+  const bd = yearsAndDays(CONFIG.anniversaryDate)
   const [showCal, setShowCal] = useState(false)
 
   return (
-    <FeatureShell onBack={onBack} title="นับวันของเรา" subtitle="ทุกวันคือของขวัญ 💗">
+    <FeatureShell onBack={onBack} title="เราอยู่และรู้จักกัน" subtitle="ทุกวันคือของขวัญเรา 💗">
       <div className="flex flex-1 flex-col items-center justify-center">
         <AnimatePresence mode="wait">
           {!showCal ? (
@@ -54,13 +54,13 @@ export default function DaysCounter({ onBack }) {
               style={{ border: '1px solid rgba(247,108,138,0.25)' }}
             >
               <span className="washi" aria-hidden />
-              <p className="text-wine/70">เราคบกันมาแล้ว</p>
+              <p className="text-wine/70">รู้ไหมเรารู้จักกัน</p>
               <div className="my-2 font-display text-[64px] leading-none text-cherry">
                 {shown.toLocaleString('th-TH')}
               </div>
               <p className="text-lg text-wine">วัน 💗</p>
               <p className="mt-4 text-sm text-wine/60">
-                = {bd.years} ปี {bd.months} เดือน {bd.days} วัน
+                = {bd.years} ปี {bd.days} วัน
               </p>
 
               <button onClick={() => setShowCal(true)} className="btn-love mt-8">

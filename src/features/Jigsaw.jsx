@@ -27,6 +27,7 @@ export default function Jigsaw({ onBack }) {
   const [done, setDone] = useState(false)
   const [flash, setFlash] = useState(false)
   const [showPopup, setShowPopup] = useState(false)
+  const [peek, setPeek] = useState(false)
   const [imgSrc, setImgSrc] = useState(asset(image))
 
   // ตรวจว่ารูปโหลดได้ไหม ถ้าไม่ได้ใช้ placeholder
@@ -70,7 +71,11 @@ export default function Jigsaw({ onBack }) {
   const cellH = BOARD / rows
 
   return (
-    <FeatureShell onBack={onBack} title="จิ๊กซอว์ของเรา" subtitle="แตะสองชิ้นเพื่อสลับที่">
+    <FeatureShell
+      onBack={onBack}
+      title="จิ๊กซอว์ของเรา"
+      subtitle="แตะ 2 ชิ้นเพื่อสลับที่ · กดค้าง 👁 เพื่อดูภาพเต็ม"
+    >
       <div className="flex flex-1 flex-col items-center justify-center">
         <div
           className="paper-texture relative rounded-card bg-white p-3 shadow-card"
@@ -78,9 +83,16 @@ export default function Jigsaw({ onBack }) {
         >
           <span className="washi" aria-hidden />
           <div
-            className="relative overflow-hidden rounded-xl"
+            className="relative overflow-hidden rounded-xl bg-blush/30"
             style={{ width: BOARD, height: BOARD, touchAction: 'manipulation' }}
           >
+            {/* ghost preview จาง ๆ ช่วยให้ต่อง่ายขึ้น */}
+            <img
+              src={imgSrc}
+              alt=""
+              className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-[0.16]"
+            />
+
             {board.map((piece, pos) => {
               const pr = Math.floor(piece / cols)
               const pc = piece % cols
@@ -92,32 +104,45 @@ export default function Jigsaw({ onBack }) {
                 <motion.button
                   key={pos}
                   onClick={() => tapPiece(pos)}
-                  animate={{
-                    scale: isSel ? 0.92 : 1,
-                  }}
+                  animate={{ scale: isSel ? 1.06 : 1 }}
+                  transition={{ type: 'spring', stiffness: 320, damping: 20 }}
                   className="absolute overflow-hidden"
                   style={{
-                    width: cellW,
-                    height: cellH,
-                    left: col * cellW,
-                    top: row * cellH,
+                    width: cellW - 2,
+                    height: cellH - 2,
+                    left: col * cellW + 1,
+                    top: row * cellH + 1,
+                    borderRadius: 7,
                     backgroundImage: `url(${imgSrc})`,
                     backgroundSize: `${BOARD}px ${BOARD}px`,
                     backgroundPosition: `-${pc * cellW}px -${pr * cellH}px`,
                     outline: locked
-                      ? '2px solid var(--gold)'
+                      ? '2.5px solid var(--gold)'
                       : isSel
                         ? '3px solid var(--cherry)'
-                        : '1px solid rgba(255,255,255,0.6)',
+                        : '1px solid rgba(255,255,255,0.65)',
                     outlineOffset: '-2px',
                     boxShadow: locked
                       ? '0 0 10px rgba(232,185,107,0.7) inset'
-                      : 'none',
-                    zIndex: isSel ? 5 : 1,
+                      : isSel
+                        ? '0 8px 18px rgba(214,46,79,0.35)'
+                        : '0 1px 3px rgba(0,0,0,0.12)',
+                    zIndex: isSel ? 10 : 1,
                   }}
                 />
               )
             })}
+
+            {/* peek: กดค้างเพื่อดูภาพเต็ม */}
+            <motion.img
+              src={imgSrc}
+              alt=""
+              className="pointer-events-none absolute inset-0 h-full w-full rounded-xl object-cover"
+              initial={false}
+              animate={{ opacity: peek ? 1 : 0 }}
+              transition={{ duration: 0.2 }}
+              style={{ zIndex: 15 }}
+            />
 
             {/* flash ตอนเสร็จ */}
             <motion.div
@@ -125,25 +150,41 @@ export default function Jigsaw({ onBack }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: flash ? 0.85 : 0 }}
               transition={{ duration: 0.3 }}
+              style={{ zIndex: 20 }}
             />
           </div>
         </div>
 
-        <p className="mt-4 text-sm text-wine/60">
-          {done ? 'ต่อครบแล้ว! 🎉' : `${solvedCount}/${n} ชิ้น`}
-        </p>
+        <div className="mt-4 flex items-center gap-3">
+          <p className="text-sm text-wine/60">
+            {done ? 'ต่อครบแล้ว! 🎉' : `${solvedCount}/${n} ชิ้น`}
+          </p>
+          {!done && (
+            <button
+              onPointerDown={() => setPeek(true)}
+              onPointerUp={() => setPeek(false)}
+              onPointerLeave={() => setPeek(false)}
+              className="flex items-center gap-1 rounded-full bg-blush/80 px-3 py-1 text-sm text-wine"
+              style={{ border: '1px solid var(--rose)' }}
+            >
+              👁 ดูตัวอย่าง
+            </button>
+          )}
+        </div>
       </div>
 
       <Popup open={showPopup} onClose={() => setShowPopup(false)}>
         <div className="text-center">
-          <div className="polaroid mx-auto mb-4 w-[230px]">
+          <div className="polaroid mx-auto mb-4 w-[210px]">
             <img
               src={imgSrc}
               alt="ภาพที่ต่อเสร็จ"
-              className="h-[210px] w-full rounded object-cover"
+              className="h-[190px] w-full rounded object-cover"
             />
-            <p className="mt-2 pb-1 font-hand text-lg text-wine">{message}</p>
           </div>
+          <p className="whitespace-pre-line px-1 font-hand text-xl leading-relaxed text-wine">
+            {message}
+          </p>
         </div>
       </Popup>
     </FeatureShell>

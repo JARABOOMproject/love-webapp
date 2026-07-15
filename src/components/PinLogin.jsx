@@ -65,8 +65,7 @@ export default function PinLogin({ onUnlock }) {
         </motion.div>
 
         <h1 className="text-center font-display text-2xl text-wine">
-          {CONFIG.coupleNames.me} <span className="text-cherry">♥</span>{' '}
-          {CONFIG.coupleNames.you}
+          {CONFIG.pinTitle}
         </h1>
         <p className="mt-2 text-center text-[15px] text-wine/70">
           {CONFIG.pinPrompt}
