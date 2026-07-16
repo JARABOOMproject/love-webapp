@@ -41,7 +41,7 @@ export const CONFIG = {
 
   // ── 4.1 จิ๊กซอว์ ──
   jigsaw: {
-    image: '/photos/jigsaw-lalita.jpg',
+    image: '/photos/41_wishing-tree.jpg',
     rows: 3,
     cols: 3,
     message:
@@ -50,7 +50,7 @@ export const CONFIG = {
 
   // ── 4.2 ขูดรูปภาพ ──
   scratch: {
-    image: '/photos/41_wishing-tree.jpg',
+    image: '/photos/jigsaw-lalita.jpg',
     message: 'ขูดเจอแล้ว… รอยยิ้มที่เราชอบที่สุด ✨',
   },
 
