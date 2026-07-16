@@ -178,22 +178,6 @@ export default function CassettePlayer({ playlistId, kick = 0 }) {
       ? '👆 แตะ ▶ เพื่อเริ่มเพลง'
       : `♪ ${title}`
 
-  const reel = (
-    <span
-      className="relative block overflow-hidden rounded-full border-2 border-wine/40 bg-white/70"
-      style={{ width: 22, height: 22, boxShadow: 'inset 0 0 0 3px rgba(122,30,51,0.15)' }}
-    >
-      {thumbUrl && (
-        <img
-          src={thumbUrl}
-          alt=""
-          className="absolute inset-0 h-full w-full rounded-full object-cover"
-          onError={() => setThumbBroken(true)}
-        />
-      )}
-    </span>
-  )
-
   return (
     <>
       {/* ต้องอยู่ใน DOM ตลอด (แม้ตอนย่อ) ไม่งั้น player instance จะพัง — YouTube ไม่อนุญาตให้ซ่อน player จนมองไม่เห็น */}
@@ -239,9 +223,9 @@ export default function CassettePlayer({ playlistId, kick = 0 }) {
             initial={{ scale: 0.7, opacity: 0, y: 10 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 22 }}
-            className="relative select-none rounded-2xl p-2.5 shadow-pop"
+            className="relative select-none rounded-2xl p-3 shadow-pop"
             style={{
-              width: 150,
+              width: 168,
               background: 'linear-gradient(135deg, #7a1e33, #d62e4f)',
               border: '1px solid rgba(232,185,107,0.5)',
             }}
@@ -256,28 +240,51 @@ export default function CassettePlayer({ playlistId, kick = 0 }) {
             </button>
 
             {/* หน้าต่างเทป */}
-            <div className="rounded-lg bg-paper/95 p-2">
-              <div className="mb-1.5 overflow-hidden">
+            <div className="rounded-lg bg-paper/95 px-2 pb-2 pt-2.5">
+              {/* แผ่นเสียง — โชว์ปกเพลงที่กำลังเล่น (แผ่นเดียว) */}
+              <div className="flex justify-center pb-1.5">
+                <span className={playing ? 'animate-spinReel' : ''}>
+                  <span
+                    className="relative block overflow-hidden rounded-full bg-white/70"
+                    style={{
+                      width: 64,
+                      height: 64,
+                      border: '3px solid rgba(232,185,107,0.65)',
+                      boxShadow: playing
+                        ? '0 0 0 4px rgba(247,108,138,0.18), 0 6px 16px rgba(122,30,51,0.35)'
+                        : '0 2px 8px rgba(122,30,51,0.25)',
+                    }}
+                  >
+                    {thumbUrl && (
+                      <img
+                        src={thumbUrl}
+                        alt=""
+                        className="absolute inset-0 h-full w-full object-cover"
+                        onError={() => setThumbBroken(true)}
+                      />
+                    )}
+                    <span
+                      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-paper"
+                      style={{ width: 14, height: 14, boxShadow: 'inset 0 0 0 2px rgba(122,30,51,0.3)' }}
+                    />
+                  </span>
+                </span>
+              </div>
+
+              <div className="overflow-hidden">
                 <div
                   className={
-                    'whitespace-nowrap font-display text-[12px] text-wine ' +
+                    'whitespace-nowrap text-center font-display text-[12px] text-wine ' +
                     (playing ? 'animate-marquee' : '')
                   }
                 >
                   {marqueeText}
                 </div>
               </div>
-
-              {/* ล้อเทป 2 ล้อ — โชว์ปกเพลงที่กำลังเล่น */}
-              <div className="flex items-center justify-between px-3 py-1">
-                <span className={playing ? 'animate-spinReel' : ''}>{reel}</span>
-                <span className="mx-1 h-[3px] flex-1 rounded bg-wine/25" />
-                <span className={playing ? 'animate-spinReel' : ''}>{reel}</span>
-              </div>
             </div>
 
             {/* ปุ่มควบคุม */}
-            <div className="mt-2 flex items-center justify-center gap-2 text-paper">
+            <div className="mt-2.5 flex items-center justify-center gap-2 text-paper">
               {canSkip && (
                 <button
                   onClick={handlePrevious}
