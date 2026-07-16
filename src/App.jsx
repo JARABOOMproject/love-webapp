@@ -137,7 +137,7 @@ export default function App() {
 
         {/* เทปเพลง — ทุกหน้ายกเว้น PIN */}
         {view !== 'pin' && (
-          <CassettePlayer tracks={CONFIG.music} kick={musicKick} />
+          <CassettePlayer playlistId={CONFIG.music.youtubePlaylistId} kick={musicKick} />
         )}
       </div>
     </div>

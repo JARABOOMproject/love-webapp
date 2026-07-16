@@ -33,11 +33,11 @@ export const CONFIG = {
   // ── วันแรกที่รู้จักกัน (YYYY-MM-DD) ──
   anniversaryDate: '2023-09-22',
 
-  // ── เพลงประกอบ (ใส่ได้หลายเพลง) ──
-  music: [
-    { title: 'เพลงของเรา', src: '/music/song1.mp3' },
-    // { title: 'เพลงที่สอง', src: '/music/song2.mp3' },
-  ],
+  // ── เพลงประกอบ — สตรีมจาก YouTube playlist โดยตรง (ไม่เก็บไฟล์เพลงในเว็บ) ──
+  music: {
+    // ใส่แค่ตัว ID ของ playlist (ส่วนหลัง list= ใน URL) ไม่ใช่ URL เต็ม
+    youtubePlaylistId: 'PLMPDkcd74NGs',
+  },
 
   // ── 4.1 จิ๊กซอว์ ──
   jigsaw: {

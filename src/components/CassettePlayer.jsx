@@ -1,78 +1,220 @@
 import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { asset } from '../config/love.config'
+import { motion } from 'framer-motion'
+import { loadYouTubeIframeAPI } from '../lib/youtubeApi'
 
-// เทปคาสเซ็ตลอยมุมล่างขวา — audio อยู่ระดับ App (ไม่ unmount ตอนเปลี่ยน view)
-export default function CassettePlayer({ tracks = [], kick = 0 }) {
-  const audioRef = useRef(null)
-  const [idx, setIdx] = useState(0)
+const AUTOPLAY_FALLBACK_MS = 1500
+
+// สุ่ม index ถัดไปแบบไม่ซ้ำกับ index ปัจจุบันทันที
+function pickRandomNext(excludeIndex, length) {
+  if (length <= 1) return 0
+  let next = excludeIndex
+  while (next === excludeIndex) {
+    next = Math.floor(Math.random() * length)
+  }
+  return next
+}
+
+// เทปคาสเซ็ตลอยมุมล่างขวา — สตรีมเพลงจาก YouTube playlist ผ่าน IFrame Player API
+// (ไม่ดาวน์โหลด/เก็บไฟล์เสียงเอง เพราะเว็บนี้เป็น public hosting)
+export default function CassettePlayer({ playlistId, kick = 0 }) {
+  const playerDivRef = useRef(null)
+  const playerRef = useRef(null)
+
+  const apiReadyRef = useRef(false)
+  const pendingAutoplayRef = useRef(false)
+  const hasPlayedOnceRef = useRef(false)
+  const prevKickRef = useRef(kick)
+  const playlistIdsRef = useRef([])
+  const historyRef = useRef([])
+  const currentIndexRef = useRef(0)
+  const autoplayTimerRef = useRef(null)
+
   const [playing, setPlaying] = useState(false)
   const [minimized, setMinimized] = useState(false)
   const [unavailable, setUnavailable] = useState(false)
+  const [playlistLength, setPlaylistLength] = useState(0)
+  const [historyLen, setHistoryLen] = useState(0)
+  const [title, setTitle] = useState('กำลังเล่นเพลย์ลิสต์...')
+  const [currentVideoId, setCurrentVideoId] = useState(null)
+  const [showTapHint, setShowTapHint] = useState(false)
+  const [thumbBroken, setThumbBroken] = useState(false)
 
-  const hasTracks = tracks && tracks.length > 0
-  const current = hasTracks ? tracks[idx % tracks.length] : null
+  const hasPlaylist = Boolean(playlistId)
 
-  // เริ่มเล่นจาก user gesture (ตอน PIN ถูก) — kick เปลี่ยนค่า
-  useEffect(() => {
-    if (kick === 0 || !hasTracks) return
-    const a = audioRef.current
-    if (!a) return
-    a.play()
-      .then(() => setPlaying(true))
-      .catch(() => setPlaying(false))
-  }, [kick, hasTracks])
-
-  const toggle = () => {
-    const a = audioRef.current
-    if (!a || unavailable) return
-    if (playing) {
-      a.pause()
-      setPlaying(false)
-    } else {
-      a.play()
-        .then(() => setPlaying(true))
-        .catch(() => setPlaying(false))
+  const captureNowPlaying = () => {
+    const p = playerRef.current
+    if (!p) return
+    if (!playlistIdsRef.current.length) {
+      const list = p.getPlaylist?.() || []
+      if (list.length) {
+        playlistIdsRef.current = list
+        setPlaylistLength(list.length)
+      }
     }
+    const idx = p.getPlaylistIndex?.()
+    if (typeof idx === 'number' && idx >= 0) currentIndexRef.current = idx
+    const vd = p.getVideoData?.()
+    setTitle(vd?.title || 'กำลังเล่นเพลย์ลิสต์...')
+    const vid = vd?.video_id || playlistIdsRef.current[currentIndexRef.current] || null
+    setThumbBroken(false)
+    setCurrentVideoId(vid)
   }
 
-  const next = () => {
-    if (!hasTracks) return
-    setIdx((i) => (i + 1) % tracks.length)
+  // ใช้ ref ล้วนสำหรับ logic (กัน stale closure — ฟังก์ชันนี้ถูกเรียกจาก event ที่ผูกไว้ครั้งเดียวตอนสร้าง player)
+  const advanceRandom = () => {
+    const length = playlistIdsRef.current.length
+    if (!length) return
+    const current = currentIndexRef.current
+    historyRef.current = [...historyRef.current, current]
+    setHistoryLen(historyRef.current.length)
+    const next = pickRandomNext(current, length)
+    currentIndexRef.current = next
+    playerRef.current?.playVideoAt?.(next)
   }
 
-  // เมื่อเปลี่ยนเพลง แล้วกำลังเล่นอยู่ → เล่นต่อ
+  const handlePrevious = () => {
+    if (!historyRef.current.length) return
+    const prevIndex = historyRef.current[historyRef.current.length - 1]
+    historyRef.current = historyRef.current.slice(0, -1)
+    setHistoryLen(historyRef.current.length)
+    currentIndexRef.current = prevIndex
+    playerRef.current?.playVideoAt?.(prevIndex)
+  }
+
+  const handleStateChange = (e) => {
+    const YTState = window.YT?.PlayerState
+    if (!YTState) return
+    const state = e.data
+    setPlaying(state === YTState.PLAYING)
+    if (state === YTState.PLAYING) {
+      hasPlayedOnceRef.current = true
+      setUnavailable(false)
+      setShowTapHint(false)
+    }
+    captureNowPlaying()
+    if (state === YTState.ENDED) advanceRandom()
+  }
+
+  // สร้าง player ครั้งเดียว
   useEffect(() => {
-    const a = audioRef.current
-    if (!a || !hasTracks) return
-    setUnavailable(false)
-    if (playing) {
-      a.play().catch(() => setPlaying(false))
+    if (!hasPlaylist) return
+    let ignore = false
+
+    loadYouTubeIframeAPI()
+      .then((YT) => {
+        if (ignore || !playerDivRef.current) return
+        playerRef.current = new YT.Player(playerDivRef.current, {
+          playerVars: {
+            listType: 'playlist',
+            list: playlistId,
+            controls: 0,
+            playsinline: 1,
+            rel: 0,
+          },
+          events: {
+            onReady: () => {
+              apiReadyRef.current = true
+              if (pendingAutoplayRef.current) {
+                pendingAutoplayRef.current = false
+                playerRef.current?.playVideo?.()
+              }
+            },
+            onStateChange: handleStateChange,
+            onError: () => {
+              if (!hasPlayedOnceRef.current) {
+                setUnavailable(true)
+              } else {
+                advanceRandom()
+              }
+            },
+          },
+        })
+      })
+      .catch(() => setUnavailable(true))
+
+    return () => {
+      ignore = true
+      playerRef.current?.destroy?.()
+      playerRef.current = null
+      apiReadyRef.current = false
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idx])
+  }, [hasPlaylist, playlistId])
+
+  // เริ่มเล่นจาก user gesture ตอน PIN ถูก (kick เปลี่ยนค่า) — ต้อง fallback ให้แตะเองได้บน iOS
+  useEffect(() => {
+    if (kick === prevKickRef.current || !hasPlaylist) return
+    prevKickRef.current = kick
+
+    if (playerRef.current && apiReadyRef.current) {
+      playerRef.current.playVideo?.()
+    } else {
+      pendingAutoplayRef.current = true
+    }
+
+    clearTimeout(autoplayTimerRef.current)
+    autoplayTimerRef.current = setTimeout(() => {
+      if (!hasPlayedOnceRef.current) setShowTapHint(true)
+    }, AUTOPLAY_FALLBACK_MS)
+
+    return () => clearTimeout(autoplayTimerRef.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kick, hasPlaylist])
+
+  const toggle = () => {
+    const p = playerRef.current
+    if (!p || unavailable) return
+    if (playing) p.pauseVideo?.()
+    else p.playVideo?.()
+  }
+
+  const canSkip = playlistLength > 1
+  const thumbUrl =
+    currentVideoId && !thumbBroken ? `https://i.ytimg.com/vi/${currentVideoId}/hqdefault.jpg` : null
+
+  const marqueeText = unavailable
+    ? '♪ เพลย์ลิสต์ไม่พร้อมใช้งาน'
+    : showTapHint
+      ? '👆 แตะ ▶ เพื่อเริ่มเพลง'
+      : `♪ ${title}`
 
   const reel = (
     <span
-      className="block rounded-full border-2 border-wine/40 bg-white/70"
-      style={{
-        width: 22,
-        height: 22,
-        boxShadow: 'inset 0 0 0 6px rgba(122,30,51,0.15)',
-      }}
-    />
+      className="relative block overflow-hidden rounded-full border-2 border-wine/40 bg-white/70"
+      style={{ width: 22, height: 22, boxShadow: 'inset 0 0 0 3px rgba(122,30,51,0.15)' }}
+    >
+      {thumbUrl && (
+        <img
+          src={thumbUrl}
+          alt=""
+          className="absolute inset-0 h-full w-full rounded-full object-cover"
+          onError={() => setThumbBroken(true)}
+        />
+      )}
+    </span>
   )
 
   return (
     <>
-      {hasTracks && (
-        <audio
-          ref={audioRef}
-          src={current?.src ? asset(current.src) : undefined}
-          loop={tracks.length === 1}
-          onEnded={next}
-          onError={() => setUnavailable(true)}
-        />
+      {/* ต้องอยู่ใน DOM ตลอด (แม้ตอนย่อ) ไม่งั้น player instance จะพัง — YouTube ไม่อนุญาตให้ซ่อน player จนมองไม่เห็น */}
+      {hasPlaylist && (
+        <div
+          className="fixed z-20"
+          style={{
+            right: 'calc(env(safe-area-inset-right, 0px) + 14px)',
+            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 78px)',
+            width: 48,
+            height: 27,
+            opacity: minimized ? 0.001 : 1,
+            pointerEvents: minimized ? 'none' : 'auto',
+            borderRadius: 6,
+            overflow: 'hidden',
+            boxShadow: minimized ? 'none' : '0 4px 10px rgba(0,0,0,0.25)',
+            transition: 'opacity 0.2s',
+          }}
+        >
+          <div ref={playerDivRef} style={{ width: '100%', height: '100%' }} />
+        </div>
       )}
 
       <div
@@ -82,87 +224,89 @@ export default function CassettePlayer({ tracks = [], kick = 0 }) {
           bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)',
         }}
       >
-        <AnimatePresence mode="wait">
-          {minimized ? (
-            <motion.button
-              key="mini"
-              initial={{ scale: 0.6, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.6, opacity: 0 }}
-              onClick={() => setMinimized(false)}
-              aria-label="ขยายเครื่องเล่นเพลง"
-              className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-rose to-cherry text-xl text-white shadow-pop"
+        {minimized ? (
+          <motion.button
+            initial={{ scale: 0.6, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            onClick={() => setMinimized(false)}
+            aria-label="ขยายเครื่องเล่นเพลง"
+            className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-rose to-cherry text-xl text-white shadow-pop"
+          >
+            🎵
+          </motion.button>
+        ) : (
+          <motion.div
+            initial={{ scale: 0.7, opacity: 0, y: 10 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+            className="relative select-none rounded-2xl p-2.5 shadow-pop"
+            style={{
+              width: 150,
+              background: 'linear-gradient(135deg, #7a1e33, #d62e4f)',
+              border: '1px solid rgba(232,185,107,0.5)',
+            }}
+          >
+            {/* ปุ่มย่อ */}
+            <button
+              onClick={() => setMinimized(true)}
+              aria-label="ย่อ"
+              className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-paper text-xs text-wine shadow"
             >
-              🎵
-            </motion.button>
-          ) : (
-            <motion.div
-              key="full"
-              initial={{ scale: 0.7, opacity: 0, y: 10 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.7, opacity: 0, y: 10 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 22 }}
-              className="relative select-none rounded-2xl p-2.5 shadow-pop"
-              style={{
-                width: 150,
-                background: 'linear-gradient(135deg, #7a1e33, #d62e4f)',
-                border: '1px solid rgba(232,185,107,0.5)',
-              }}
-            >
-              {/* ปุ่มย่อ */}
-              <button
-                onClick={() => setMinimized(true)}
-                aria-label="ย่อ"
-                className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-paper text-xs text-wine shadow"
-              >
-                –
-              </button>
+              –
+            </button>
 
-              {/* หน้าต่างเทป */}
-              <div className="rounded-lg bg-paper/95 p-2">
-                <div className="mb-1.5 overflow-hidden">
-                  <div
-                    className={
-                      'whitespace-nowrap font-display text-[12px] text-wine ' +
-                      (playing ? 'animate-marquee' : '')
-                    }
-                  >
-                    {unavailable
-                      ? '♪ ใส่ไฟล์เพลงใน /music'
-                      : `♪ ${current?.title ?? 'ยังไม่มีเพลง'}`}
-                  </div>
-                </div>
-
-                {/* ล้อเทป 2 ล้อ */}
-                <div className="flex items-center justify-between px-3 py-1">
-                  <span className={playing ? 'animate-spinReel' : ''}>{reel}</span>
-                  <span className="mx-1 h-[3px] flex-1 rounded bg-wine/25" />
-                  <span className={playing ? 'animate-spinReel' : ''}>{reel}</span>
+            {/* หน้าต่างเทป */}
+            <div className="rounded-lg bg-paper/95 p-2">
+              <div className="mb-1.5 overflow-hidden">
+                <div
+                  className={
+                    'whitespace-nowrap font-display text-[12px] text-wine ' +
+                    (playing ? 'animate-marquee' : '')
+                  }
+                >
+                  {marqueeText}
                 </div>
               </div>
 
-              {/* ปุ่มควบคุม */}
-              <div className="mt-2 flex items-center justify-center gap-3 text-paper">
+              {/* ล้อเทป 2 ล้อ — โชว์ปกเพลงที่กำลังเล่น */}
+              <div className="flex items-center justify-between px-3 py-1">
+                <span className={playing ? 'animate-spinReel' : ''}>{reel}</span>
+                <span className="mx-1 h-[3px] flex-1 rounded bg-wine/25" />
+                <span className={playing ? 'animate-spinReel' : ''}>{reel}</span>
+              </div>
+            </div>
+
+            {/* ปุ่มควบคุม */}
+            <div className="mt-2 flex items-center justify-center gap-2 text-paper">
+              {canSkip && (
                 <button
-                  onClick={toggle}
-                  aria-label={playing ? 'หยุด' : 'เล่น'}
+                  onClick={handlePrevious}
+                  disabled={historyLen === 0}
+                  aria-label="เพลงก่อนหน้า"
+                  className="grid h-8 w-8 place-items-center rounded-full bg-white/20 text-sm active:scale-90 disabled:opacity-30"
+                >
+                  ⏮
+                </button>
+              )}
+              <button
+                onClick={toggle}
+                aria-label={playing ? 'หยุด' : 'เล่น'}
+                className="grid h-8 w-8 place-items-center rounded-full bg-white/20 text-sm active:scale-90"
+              >
+                {playing ? '❚❚' : '►'}
+              </button>
+              {canSkip && (
+                <button
+                  onClick={advanceRandom}
+                  aria-label="สุ่มเพลงถัดไป"
                   className="grid h-8 w-8 place-items-center rounded-full bg-white/20 text-sm active:scale-90"
                 >
-                  {playing ? '❚❚' : '►'}
+                  🔀
                 </button>
-                {tracks.length > 1 && (
-                  <button
-                    onClick={next}
-                    aria-label="เพลงถัดไป"
-                    className="grid h-8 w-8 place-items-center rounded-full bg-white/20 text-sm active:scale-90"
-                  >
-                    ⏭
-                  </button>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              )}
+            </div>
+          </motion.div>
+        )}
       </div>
 
       <style>{`
