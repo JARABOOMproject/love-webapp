@@ -82,7 +82,7 @@ export default function Jigsaw({ onBack }) {
           style={{
             borderRadius: 'var(--r-xl)',
             border: '1px solid var(--hairline-gold)',
-            boxShadow: 'var(--shadow-3)',
+            boxShadow: 'var(--shadow-3), inset 0 0 0 2px rgba(232,185,107,0.3)',
           }}
         >
           <span className="washi" aria-hidden />

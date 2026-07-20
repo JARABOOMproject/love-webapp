@@ -32,8 +32,14 @@ function GalleryLoading() {
     >
       <div className="text-center">
         <div
-          className="mx-auto mb-4 h-10 w-10 rounded-full border-2 border-white/25 border-t-white"
-          style={{ animation: 'galSpin 0.9s linear infinite' }}
+          className="mx-auto mb-4 h-11 w-11 rounded-full"
+          style={{
+            border: '3px solid rgba(255,255,255,0.2)',
+            borderTopColor: '#f6d78a',
+            borderRightColor: '#e8b96b',
+            boxShadow: '0 0 16px rgba(232,185,107,0.5)',
+            animation: 'galSpin 0.9s linear infinite',
+          }}
         />
         <div className="animate-pulse text-4xl drop-shadow">♥</div>
         <p className="mt-3 text-sm tracking-wide text-white/85">กำลังโหลดความทรงจำ…</p>
@@ -95,7 +101,7 @@ export default function App() {
   return (
     <div className="min-h-full w-full">
       {/* กรอบแอป mobile-first กึ่งกลาง */}
-      <div className="relative mx-auto min-h-dvh w-full max-w-app overflow-hidden bg-paper shadow-[0_0_80px_rgba(214,46,79,0.12)]">
+      <div className="grain relative mx-auto min-h-dvh w-full max-w-app overflow-hidden bg-paper shadow-[0_0_80px_rgba(214,46,79,0.12)]">
         <AnimatePresence mode="wait">
           {view === 'pin' && (
             <motion.div

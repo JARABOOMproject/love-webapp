@@ -215,7 +215,10 @@ export default function CassettePlayer({ playlistId, kick = 0 }) {
             onClick={() => setMinimized(false)}
             aria-label="ขยายเครื่องเล่นเพลง"
             className="grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-rose to-cherry text-xl text-white"
-            style={{ border: '1.5px solid rgba(255,255,255,0.6)', boxShadow: 'var(--shadow-3)' }}
+            style={{
+              border: '2px solid rgba(251,231,173,0.9)',
+              boxShadow: 'var(--shadow-3), 0 0 0 1px rgba(184,134,63,0.4), inset 0 2px 4px rgba(255,255,255,0.4)',
+            }}
           >
             🎵
           </motion.button>
@@ -251,10 +254,14 @@ export default function CassettePlayer({ playlistId, kick = 0 }) {
                     style={{
                       width: 64,
                       height: 64,
-                      border: '3px solid rgba(232,185,107,0.65)',
+                      border: '3px solid transparent',
+                      backgroundImage:
+                        'linear-gradient(#fff, #fff), var(--foil-gold)',
+                      backgroundOrigin: 'border-box',
+                      backgroundClip: 'content-box, border-box',
                       boxShadow: playing
-                        ? '0 0 0 4px rgba(247,108,138,0.18), 0 6px 16px rgba(122,30,51,0.35)'
-                        : '0 2px 8px rgba(122,30,51,0.25)',
+                        ? '0 0 0 3px rgba(247,108,138,0.2), 0 6px 16px rgba(122,30,51,0.4)'
+                        : '0 3px 10px rgba(122,30,51,0.3)',
                     }}
                   >
                     {thumbUrl && (

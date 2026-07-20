@@ -44,6 +44,21 @@
   --grad-primary: linear-gradient(135deg, var(--rose), var(--cherry));
   --grad-deep: linear-gradient(135deg, #7a1e33, #d62e4f);
 
+  /* ── Gold foil (accent พรีเมียม — ไล่เฉดทองหลายสต็อป) ── */
+  --gold-hi: #fbe7ad; /* ทองสว่าง (ไฮไลต์) */
+  --gold-mid: #e8b96b; /* ทองกลาง */
+  --gold-deep: #b8863f; /* ทองเข้ม (เงา) */
+  --foil-gold: linear-gradient(
+    135deg,
+    #fbe7ad 0%,
+    #e8b96b 26%,
+    #b8863f 50%,
+    #e8b96b 74%,
+    #fbe7ad 100%
+  );
+  --foil-gold-soft: linear-gradient(135deg, #f6d78a, #e8b96b 55%, #cf9a4e);
+  --shadow-gold: 0 6px 18px rgba(184, 134, 63, 0.28);
+
   /* ── Layout / motion ── */
   --app-max: 430px;
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);

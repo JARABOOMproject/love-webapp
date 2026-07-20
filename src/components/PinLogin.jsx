@@ -58,7 +58,7 @@ export default function PinLogin({ onUnlock }) {
           initial={{ scale: 0.6, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-          className="relative mb-5 grid h-24 w-24 place-items-center"
+          className="relative mb-5 grid h-28 w-28 place-items-center"
           aria-hidden
         >
           <span
@@ -68,8 +68,20 @@ export default function PinLogin({ onUnlock }) {
                 'radial-gradient(circle at 50% 45%, rgba(255,217,227,0.9), rgba(255,217,227,0) 70%)',
             }}
           />
+          {/* วงแหวนทองประดับ + แสง shimmer หมุนช้า */}
+          <span
+            className="foil-ring sheen absolute inset-2 rounded-full"
+            style={{ opacity: 0.95 }}
+          />
+          <span
+            className="absolute inset-2 rounded-full"
+            style={{
+              background:
+                'radial-gradient(circle at 50% 42%, rgba(255,255,255,0.85), rgba(255,246,242,0.6) 60%, rgba(255,246,242,0) 72%)',
+            }}
+          />
           <motion.span
-            className="relative text-[64px] leading-none"
+            className="relative text-[58px] leading-none"
             style={{ filter: 'drop-shadow(0 8px 18px rgba(214,46,79,0.28))' }}
             animate={{ y: [0, -4, 0] }}
             transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
@@ -78,15 +90,15 @@ export default function PinLogin({ onUnlock }) {
           </motion.span>
         </motion.div>
 
-        <h1 className="text-center font-display text-[26px] leading-tight text-wine">
+        <h1 className="foil-text text-center font-display text-[28px] leading-tight">
           {CONFIG.pinTitle}
         </h1>
 
-        {/* เส้นคั่นหัวใจเล็ก ๆ */}
-        <div className="mt-2 flex items-center gap-2 text-cherry/60" aria-hidden>
-          <span className="h-px w-8 bg-gradient-to-r from-transparent to-rose/60" />
-          <span className="text-xs">♥</span>
-          <span className="h-px w-8 bg-gradient-to-l from-transparent to-rose/60" />
+        {/* เส้นคั่นทอง + หัวใจ */}
+        <div className="mt-2.5 flex w-40 items-center gap-2" aria-hidden>
+          <span className="foil-line flex-1" />
+          <span className="text-xs text-gold">♥</span>
+          <span className="foil-line flex-1" />
         </div>
 
         <p className="mt-2 text-center text-[15px]" style={{ color: 'var(--ink-soft)' }}>
@@ -162,13 +174,11 @@ export default function PinLogin({ onUnlock }) {
                 key={i}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => press(k)}
-                className="grid h-16 w-16 place-items-center rounded-full font-display text-2xl text-wine transition active:bg-blush"
+                className="glass grid h-16 w-16 place-items-center rounded-full font-display text-2xl text-wine transition active:brightness-95"
                 style={{
-                  background:
-                    'linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.7))',
-                  border: '1px solid rgba(247,108,138,0.35)',
+                  border: '1px solid rgba(232,185,107,0.45)',
                   boxShadow:
-                    '0 6px 14px rgba(214,46,79,0.14), inset 0 1px 0 rgba(255,255,255,0.9)',
+                    '0 8px 18px rgba(214,46,79,0.15), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 0 0 1px rgba(255,255,255,0.4)',
                 }}
               >
                 {k}

@@ -69,10 +69,15 @@ export default function Portal({ onOpen }) {
             วันที่ {days.toLocaleString('th-TH')} ของเรา
           </motion.div>
 
-          <h1 className="mt-4 font-display text-[25px] leading-snug text-wine">
+          <h1 className="foil-text mt-4 font-display text-[26px] leading-snug">
             {CONFIG.portal?.heading ?? `${CONFIG.coupleNames.me} & ${CONFIG.coupleNames.you}`}
           </h1>
-          <p className="mt-1.5 text-[14.5px]" style={{ color: 'var(--ink-soft)' }}>
+          <div className="mx-auto mt-2 flex w-32 items-center gap-2" aria-hidden>
+            <span className="foil-line flex-1" />
+            <span className="text-[10px] text-gold">♥</span>
+            <span className="foil-line flex-1" />
+          </div>
+          <p className="mt-2 text-[14.5px]" style={{ color: 'var(--ink-soft)' }}>
             {CONFIG.portal?.subtitle ?? 'เลือกของขวัญที่อยากเปิดเลยนะ 🎁'}
           </p>
         </header>
@@ -88,18 +93,21 @@ export default function Portal({ onOpen }) {
               transition={{ delay: i * 0.06, type: 'spring', stiffness: 260, damping: 22 }}
               whileTap={{ scale: 0.94 }}
               whileHover={{ y: -3 }}
-              className="card-love flex min-h-[148px] flex-col items-center justify-center gap-2.5 px-3 py-6 text-center"
+              className="card-love flex min-h-[150px] flex-col items-center justify-center gap-2.5 px-3 py-6 text-center"
             >
               <span className="washi" aria-hidden />
+              {/* มุมทองประดับ */}
               <span
-                className="grid h-16 w-16 place-items-center rounded-2xl"
+                className="pointer-events-none absolute right-0 top-0 h-9 w-9"
                 style={{
                   background:
-                    'linear-gradient(160deg, rgba(255,255,255,0.9), rgba(255,217,227,0.75))',
-                  boxShadow:
-                    'inset 0 1px 0 rgba(255,255,255,0.9), 0 6px 14px rgba(214,46,79,0.14)',
-                  border: '1px solid rgba(247,108,138,0.22)',
+                    'linear-gradient(225deg, rgba(232,185,107,0.55), rgba(232,185,107,0) 62%)',
+                  borderTopRightRadius: 'var(--r-xl)',
                 }}
+                aria-hidden
+              />
+              <span
+                className="foil-ring grid h-16 w-16 place-items-center rounded-2xl"
               >
                 <c.Icon />
               </span>

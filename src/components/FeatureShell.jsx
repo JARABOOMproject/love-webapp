@@ -15,10 +15,23 @@ export default function FeatureShell({ onBack, title, subtitle, children }) {
           <motion.h2
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="font-display text-[24px] leading-tight text-wine"
+            className="foil-text font-display text-[25px] leading-tight"
           >
             {title}
           </motion.h2>
+        )}
+        {title && (
+          <motion.div
+            initial={{ opacity: 0, scaleX: 0.6 }}
+            animate={{ opacity: 1, scaleX: 1 }}
+            transition={{ delay: 0.08 }}
+            className="mx-auto mt-2 flex w-28 items-center gap-2"
+            aria-hidden
+          >
+            <span className="foil-line flex-1" />
+            <span className="text-[10px] text-gold">♥</span>
+            <span className="foil-line flex-1" />
+          </motion.div>
         )}
         {subtitle && (
           <motion.p

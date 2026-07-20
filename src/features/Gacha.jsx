@@ -91,7 +91,8 @@ export default function Gacha({ onBack }) {
               background:
                 'radial-gradient(circle at 35% 28%, rgba(255,255,255,0.85), rgba(255,217,227,0.5) 55%, rgba(247,108,138,0.25))',
               border: '3px solid rgba(255,255,255,0.7)',
-              boxShadow: 'inset 0 6px 16px rgba(255,255,255,0.6), 0 10px 24px rgba(214,46,79,0.2)',
+              boxShadow:
+                'inset 0 6px 16px rgba(255,255,255,0.6), 0 0 0 3px rgba(232,185,107,0.55), 0 0 0 4px rgba(255,255,255,0.5), 0 12px 26px rgba(214,46,79,0.22)',
             }}
           >
             {/* แสงสะท้อนบนโดมแก้ว */}
@@ -208,7 +209,11 @@ export default function Gacha({ onBack }) {
           <div className="mb-3 text-4xl">💝</div>
           <div
             className="mx-auto rounded-2xl px-4 py-4"
-            style={{ background: 'rgba(255,217,227,0.35)', border: '1px solid var(--hairline)' }}
+            style={{
+              background: 'linear-gradient(180deg, rgba(255,253,248,0.9), rgba(255,240,230,0.7))',
+              border: '1px solid rgba(232,185,107,0.55)',
+              boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.6), var(--shadow-gold)',
+            }}
           >
             <p className="font-hand text-2xl leading-relaxed text-wine">
               {result?.text}

@@ -24,7 +24,7 @@ export default function Popup({ open, onClose, children, dismissable = true }) {
             style={{
               borderRadius: 'var(--r-xl)',
               border: '1px solid var(--hairline-gold)',
-              boxShadow: 'var(--shadow-4)',
+              boxShadow: 'var(--shadow-4), inset 0 0 0 2px rgba(232,185,107,0.22)',
             }}
             initial={{ scale: 0.8, y: 24, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
@@ -32,6 +32,21 @@ export default function Popup({ open, onClose, children, dismissable = true }) {
             transition={{ type: 'spring', stiffness: 320, damping: 24 }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* มุมทองประดับ 4 มุม */}
+            {[
+              'left-2 top-2 border-l-2 border-t-2',
+              'right-2 top-2 border-r-2 border-t-2',
+              'left-2 bottom-2 border-l-2 border-b-2',
+              'right-2 bottom-2 border-r-2 border-b-2',
+            ].map((pos) => (
+              <span
+                key={pos}
+                className={`pointer-events-none absolute z-[2] h-4 w-4 ${pos}`}
+                style={{ borderColor: 'rgba(232,185,107,0.6)' }}
+                aria-hidden
+              />
+            ))}
+
             {/* ตราประทับหัวใจทอง */}
             <div className="stamp absolute -right-3 -top-3 z-10 bg-paper" aria-hidden>
               ♥

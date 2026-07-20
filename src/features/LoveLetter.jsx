@@ -98,10 +98,11 @@ function Envelope({ stage, onOpen }) {
         <motion.button
           onClick={onOpen}
           aria-label="เปิดซองจดหมาย"
-          className="grid h-16 w-16 place-items-center rounded-full text-2xl text-white"
+          className="grid h-[68px] w-[68px] place-items-center rounded-full text-2xl text-white"
           style={{
             background: 'radial-gradient(circle at 38% 32%, #ef4d6a, #d62e4f 60%, #a51f38)',
-            boxShadow: '0 6px 14px rgba(214,46,79,0.5), inset 0 2px 6px rgba(255,255,255,0.4)',
+            boxShadow:
+              '0 6px 14px rgba(214,46,79,0.5), inset 0 2px 6px rgba(255,255,255,0.45), inset 0 -6px 10px rgba(122,30,51,0.4), 0 0 0 3px rgba(232,185,107,0.7), 0 0 0 4px rgba(255,255,255,0.4)',
           }}
           animate={
             opening
@@ -143,13 +144,22 @@ function Letter() {
       style={{
         borderRadius: 'var(--r-xl)',
         border: '1px solid var(--hairline-gold)',
-        boxShadow: 'var(--shadow-4)',
+        boxShadow: 'var(--shadow-4), inset 0 0 0 2px rgba(232,185,107,0.22)',
         background:
           'repeating-linear-gradient(#fffdf8 0 30px, rgba(214,46,79,0.05) 30px 31px)',
         outline: '1px solid rgba(232,185,107,0.25)',
         outlineOffset: '-6px',
       }}
     >
+      {/* ลายน้ำหัวใจจาง ๆ ด้านหลังข้อความ */}
+      <span
+        className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[160px] leading-none"
+        style={{ color: 'rgba(232,185,107,0.1)', zIndex: -1 }}
+        aria-hidden
+      >
+        ♥
+      </span>
+
       {/* รูปโพลารอยด์เล็ก + เทปวาชิ */}
       {hasImg && (
         <div className="relative mx-auto mb-5 w-[170px]">

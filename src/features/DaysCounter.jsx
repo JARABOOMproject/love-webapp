@@ -67,8 +67,17 @@ export default function DaysCounter({ onBack }) {
                 {shown.toLocaleString('th-TH')}
               </div>
               <p className="text-lg text-wine">วัน 💗</p>
-              <div className="mx-auto mt-4 inline-flex rounded-full bg-blush/50 px-4 py-1.5 text-sm text-wine">
+              <div
+                className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm text-wine"
+                style={{
+                  background: 'linear-gradient(180deg, #fffdf8, #fff3e6)',
+                  border: '1px dashed var(--gold-deep)',
+                  boxShadow: 'var(--shadow-gold)',
+                }}
+              >
+                <span className="text-gold">✦</span>
                 = {bd.years} ปี {bd.days} วัน
+                <span className="text-gold">✦</span>
               </div>
 
               <div className="mt-8">
@@ -140,19 +149,19 @@ function Calendar({ onClose }) {
       <div className="mb-3 flex items-center justify-between px-1">
         <button
           onClick={() => move(-1)}
-          className="grid h-11 w-11 place-items-center rounded-full text-lg text-wine transition active:bg-blush/60"
-          style={{ border: '1px solid var(--hairline)' }}
+          className="glass grid h-11 w-11 place-items-center rounded-full text-lg text-wine transition active:brightness-95"
+          style={{ border: '1px solid rgba(232,185,107,0.5)' }}
           aria-label="เดือนก่อน"
         >
           ←
         </button>
-        <div className="font-display text-lg text-wine">
+        <div className="foil-text font-display text-lg">
           {TH_MONTHS[cursor.m - 1]} {cursor.y + 543}
         </div>
         <button
           onClick={() => move(1)}
-          className="grid h-11 w-11 place-items-center rounded-full text-lg text-wine transition active:bg-blush/60"
-          style={{ border: '1px solid var(--hairline)' }}
+          className="glass grid h-11 w-11 place-items-center rounded-full text-lg text-wine transition active:brightness-95"
+          style={{ border: '1px solid rgba(232,185,107,0.5)' }}
           aria-label="เดือนถัดไป"
         >
           →
