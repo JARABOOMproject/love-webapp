@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { CONFIG, asset } from '../config/love.config'
 import { daysSince } from '../lib/date'
 import FloatingHearts from './FloatingHearts'
+import TiltCard from './TiltCard'
 import {
   IcJigsaw,
   IcScratch,
@@ -82,20 +83,16 @@ export default function Portal({ onOpen }) {
           </p>
         </header>
 
-        {/* Grid 2×3 */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Grid 2×3 — การ์ด 3D เอียงตามนิ้ว */}
+        <div className="grid grid-cols-2 gap-4" style={{ perspective: 900 }}>
           {CARDS.map((c, i) => (
-            <motion.button
+            <TiltCard
               key={c.key}
+              index={i}
               onClick={() => onOpen(c.key)}
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.06, type: 'spring', stiffness: 260, damping: 22 }}
-              whileTap={{ scale: 0.94 }}
-              whileHover={{ y: -3 }}
               className="card-love flex min-h-[150px] flex-col items-center justify-center gap-2.5 px-3 py-6 text-center"
             >
-              <span className="washi" aria-hidden />
+              <span className="washi" aria-hidden style={{ transform: 'translateZ(30px)' }} />
               {/* มุมทองประดับ */}
               <span
                 className="pointer-events-none absolute right-0 top-0 h-9 w-9"
@@ -108,16 +105,23 @@ export default function Portal({ onOpen }) {
               />
               <span
                 className="foil-ring grid h-16 w-16 place-items-center rounded-2xl"
+                style={{ transform: 'translateZ(38px)' }}
               >
                 <c.Icon />
               </span>
-              <span className="font-display text-[17px] leading-tight text-wine">
+              <span
+                className="font-display text-[17px] leading-tight text-wine"
+                style={{ transform: 'translateZ(22px)' }}
+              >
                 {c.title}
               </span>
-              <span className="text-xs" style={{ color: 'var(--ink-faint)' }}>
+              <span
+                className="text-xs"
+                style={{ color: 'var(--ink-faint)', transform: 'translateZ(14px)' }}
+              >
                 {c.desc}
               </span>
-            </motion.button>
+            </TiltCard>
           ))}
         </div>
       </div>

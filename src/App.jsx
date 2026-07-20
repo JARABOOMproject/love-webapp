@@ -16,13 +16,23 @@ const HeartGallery3D = lazy(() => import('./features/HeartGallery3D'))
 
 const AUTH_KEY = 'love_authed'
 
-// slide + fade page transition (300ms)
-const pageVariants = {
-  initial: { opacity: 0, x: 40 },
-  animate: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: -40 },
-}
-const pageTransition = { duration: 0.3, ease: [0.4, 0, 0.2, 1] }
+// 3D card-flip page transition — พลิกหมุนแกน Y เหมือนเปิดการ์ด
+const prefersReduced =
+  typeof window !== 'undefined' &&
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+const pageVariants = prefersReduced
+  ? {
+      initial: { opacity: 0 },
+      animate: { opacity: 1 },
+      exit: { opacity: 0 },
+    }
+  : {
+      initial: { opacity: 0, rotateY: 55, x: 60, scale: 0.94 },
+      animate: { opacity: 1, rotateY: 0, x: 0, scale: 1 },
+      exit: { opacity: 0, rotateY: -55, x: -60, scale: 0.94 },
+    }
+const pageTransition = { duration: 0.5, ease: [0.22, 1, 0.36, 1] }
 
 function GalleryLoading() {
   return (
@@ -101,7 +111,10 @@ export default function App() {
   return (
     <div className="min-h-full w-full">
       {/* กรอบแอป mobile-first กึ่งกลาง */}
-      <div className="grain relative mx-auto min-h-dvh w-full max-w-app overflow-hidden bg-paper shadow-[0_0_80px_rgba(214,46,79,0.12)]">
+      <div
+        className="grain relative mx-auto min-h-dvh w-full max-w-app overflow-hidden bg-paper shadow-[0_0_80px_rgba(214,46,79,0.12)]"
+        style={{ perspective: '1400px' }}
+      >
         <AnimatePresence mode="wait">
           {view === 'pin' && (
             <motion.div

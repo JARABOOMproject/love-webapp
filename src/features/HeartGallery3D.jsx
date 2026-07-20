@@ -59,23 +59,25 @@ export default function HeartGallery3D({ onBack }) {
     scene.add(group)
 
     // ── heart particles ──
-    const pCount = 50
+    const pCount = 90
     const pGeo = new THREE.BufferGeometry()
     const pPos = new Float32Array(pCount * 3)
+    const pSpeed = new Float32Array(pCount)
     for (let i = 0; i < pCount; i++) {
-      pPos[i * 3] = (Math.random() - 0.5) * 10
-      pPos[i * 3 + 1] = (Math.random() - 0.5) * 10
-      pPos[i * 3 + 2] = (Math.random() - 0.5) * 6 - 2
+      pPos[i * 3] = (Math.random() - 0.5) * 11
+      pPos[i * 3 + 1] = (Math.random() - 0.5) * 11
+      pPos[i * 3 + 2] = (Math.random() - 0.5) * 7 - 2
+      pSpeed[i] = 0.004 + Math.random() * 0.006
     }
     pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3))
     const heartSprite = makeHeartSprite()
     const pMat = new THREE.PointsMaterial({
-      size: 0.28,
+      size: 0.32,
       map: heartSprite,
       transparent: true,
       color: 0xff9bb3,
       depthWrite: false,
-      opacity: 0.8,
+      opacity: 0.85,
     })
     const points = new THREE.Points(pGeo, pMat)
     scene.add(points)
@@ -278,9 +280,11 @@ export default function HeartGallery3D({ onBack }) {
     // ── loop ──
     const tmp = new THREE.Vector3()
     const forward = new THREE.Vector3()
+    const clock = new THREE.Clock()
     let raf
     const tick = () => {
       raf = requestAnimationFrame(tick)
+      const et = clock.getElapsedTime()
 
       if (autoRot && !dragging) group.rotation.y += 0.0035
       else if (!dragging && !selected) {
@@ -289,6 +293,21 @@ export default function HeartGallery3D({ onBack }) {
       }
       group.rotation.x += (0 - group.rotation.x) * (selected ? 0.05 : 0.002)
 
+      // ลอยขึ้น-ลง + โยกเบา ๆ ให้ทรงหัวใจดูมีชีวิต 3 มิติ
+      if (!reduced && !selected) {
+        group.position.y = Math.sin(et * 0.6) * 0.12
+        group.rotation.z = Math.sin(et * 0.4) * 0.028
+      }
+
+      // หัวใจเกล็ดลอยขึ้น + วนกลับ
+      if (!reduced) {
+        const pa = pGeo.attributes.position
+        for (let i = 0; i < pCount; i++) {
+          pa.array[i * 3 + 1] += pSpeed[i]
+          if (pa.array[i * 3 + 1] > 5.5) pa.array[i * 3 + 1] = -5.5
+        }
+        pa.needsUpdate = true
+      }
       points.rotation.y += 0.0008
 
       // การ์ดที่ถูกเลือก → ลอยเข้าหากล้อง
@@ -356,7 +375,7 @@ export default function HeartGallery3D({ onBack }) {
 
   return (
     <div
-      className="relative min-h-screen"
+      className="relative min-h-dvh"
       style={{
         background: 'linear-gradient(160deg, #f76c8a 0%, #a51f38 60%, #5c1526 100%)',
       }}
@@ -368,9 +387,17 @@ export default function HeartGallery3D({ onBack }) {
         className="pointer-events-none absolute left-0 right-0 text-center"
         style={{ top: 'calc(env(safe-area-inset-top,0px) + 70px)' }}
       >
-        <h2 className="font-display text-2xl text-white drop-shadow">
+        <h2
+          className="foil-text-deep font-display text-2xl"
+          style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.35))' }}
+        >
           แกลเลอรีหัวใจ
         </h2>
+        <div className="mx-auto mt-1.5 flex w-24 items-center gap-2 opacity-80" aria-hidden>
+          <span className="foil-line flex-1" />
+          <span className="text-[10px]" style={{ color: '#f6d78a' }}>♥</span>
+          <span className="foil-line flex-1" />
+        </div>
       </div>
 
       {hint && (
