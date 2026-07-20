@@ -50,22 +50,32 @@ export default function DaysCounter({ onBack }) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, x: -30 }}
-              className="paper-texture relative w-full rounded-card bg-white/80 px-6 py-10 text-center shadow-card"
-              style={{ border: '1px solid rgba(247,108,138,0.25)' }}
+              className="card-love w-full px-6 py-11 text-center"
             >
               <span className="washi" aria-hidden />
-              <p className="text-wine/70">รู้ไหมเรารู้จักกัน</p>
-              <div className="my-2 font-display text-[64px] leading-none text-cherry">
+              <p style={{ color: 'var(--ink-soft)' }}>รู้ไหมเรารู้จักกัน</p>
+              <div
+                className="my-1 font-display text-[68px] leading-none text-cherry"
+                style={{
+                  background: 'linear-gradient(180deg, #f76c8a, #d62e4f)',
+                  WebkitBackgroundClip: 'text',
+                  backgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  filter: 'drop-shadow(0 4px 10px rgba(214,46,79,0.22))',
+                }}
+              >
                 {shown.toLocaleString('th-TH')}
               </div>
               <p className="text-lg text-wine">วัน 💗</p>
-              <p className="mt-4 text-sm text-wine/60">
+              <div className="mx-auto mt-4 inline-flex rounded-full bg-blush/50 px-4 py-1.5 text-sm text-wine">
                 = {bd.years} ปี {bd.days} วัน
-              </p>
+              </div>
 
-              <button onClick={() => setShowCal(true)} className="btn-love mt-8">
-                ดูปฏิทิน →
-              </button>
+              <div className="mt-8">
+                <button onClick={() => setShowCal(true)} className="btn-love">
+                  ดูปฏิทิน →
+                </button>
+              </div>
             </motion.div>
           ) : (
             <Calendar key="cal" onClose={() => setShowCal(false)} />
@@ -122,8 +132,7 @@ function Calendar({ onClose }) {
       initial={{ opacity: 0, x: 30 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 30 }}
-      className="paper-texture relative w-full overflow-hidden rounded-card bg-white/85 px-4 py-5 shadow-card"
-      style={{ border: '1px solid rgba(247,108,138,0.25)' }}
+      className="card-love w-full overflow-hidden px-4 py-5"
     >
       {/* heart shower ครั้งแรก */}
       {firstOpen && <HeartShower />}
@@ -131,7 +140,8 @@ function Calendar({ onClose }) {
       <div className="mb-3 flex items-center justify-between px-1">
         <button
           onClick={() => move(-1)}
-          className="grid h-9 w-9 place-items-center rounded-full text-wine active:bg-blush/60"
+          className="grid h-11 w-11 place-items-center rounded-full text-lg text-wine transition active:bg-blush/60"
+          style={{ border: '1px solid var(--hairline)' }}
           aria-label="เดือนก่อน"
         >
           ←
@@ -141,14 +151,15 @@ function Calendar({ onClose }) {
         </div>
         <button
           onClick={() => move(1)}
-          className="grid h-9 w-9 place-items-center rounded-full text-wine active:bg-blush/60"
+          className="grid h-11 w-11 place-items-center rounded-full text-lg text-wine transition active:bg-blush/60"
+          style={{ border: '1px solid var(--hairline)' }}
           aria-label="เดือนถัดไป"
         >
           →
         </button>
       </div>
 
-      <div className="mb-1 grid grid-cols-7 text-center text-xs text-wine/50">
+      <div className="mb-1 grid grid-cols-7 text-center text-xs" style={{ color: 'var(--ink-faint)' }}>
         {TH_DOW.map((d) => (
           <div key={d} className="py-1">
             {d}
@@ -182,9 +193,15 @@ function Calendar({ onClose }) {
                     <span
                       className={
                         'grid h-8 w-8 place-items-center rounded-full text-sm ' +
-                        (isToday(d)
-                          ? 'bg-rose font-semibold text-white'
-                          : 'text-wine/70')
+                        (isToday(d) ? 'font-semibold text-white' : '')
+                      }
+                      style={
+                        isToday(d)
+                          ? {
+                              background: 'linear-gradient(135deg, var(--rose), var(--cherry))',
+                              boxShadow: '0 4px 10px rgba(214,46,79,0.35)',
+                            }
+                          : { color: 'var(--ink-soft)' }
                       }
                     >
                       {d}

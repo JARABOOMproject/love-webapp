@@ -10,6 +10,7 @@ export default {
         cherry: 'var(--cherry)',
         wine: 'var(--wine)',
         gold: 'var(--gold)',
+        ink: 'var(--ink)',
       },
       fontFamily: {
         display: ['Mitr', 'system-ui', 'sans-serif'],
@@ -18,10 +19,14 @@ export default {
       },
       borderRadius: {
         card: '20px',
+        xl2: '26px',
       },
       boxShadow: {
-        card: '0 8px 24px rgba(214,46,79,.12)',
-        pop: '0 16px 48px rgba(214,46,79,.22)',
+        card: 'var(--shadow-2)',
+        pop: 'var(--shadow-3)',
+        e1: 'var(--shadow-1)',
+        e3: 'var(--shadow-3)',
+        e4: 'var(--shadow-4)',
       },
       maxWidth: {
         app: '430px',

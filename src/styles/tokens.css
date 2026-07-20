@@ -11,9 +11,47 @@
   --rose-soft: #ffe4ec;
   --paper-2: #fef0ea;
   --wine-60: rgba(122, 30, 51, 0.6);
-  --shadow-card: 0 8px 24px rgba(214, 46, 79, 0.12);
-  --shadow-pop: 0 16px 48px rgba(214, 46, 79, 0.22);
 
+  /* ── Ink (ตัวอักษร) — คอนทราสต์พอสำหรับอ่านกลางแดด ── */
+  --ink: #6a1a2c; /* หลัก (เข้มกว่า wine เล็กน้อย) */
+  --ink-soft: rgba(106, 26, 44, 0.72); /* รอง — แทน text-wine/60 ที่จางไป */
+  --ink-faint: rgba(106, 26, 44, 0.52); /* คำใบ้/label */
+
+  /* ── Surface (พื้นการ์ด) ── */
+  --surface: rgba(255, 255, 255, 0.86); /* การ์ดหลัก */
+  --surface-2: rgba(255, 255, 255, 0.7); /* การ์ดรอง/ปุ่ม glass */
+  --surface-solid: #fffdfa; /* กระดาษจดหมาย */
+  --hairline: rgba(247, 108, 138, 0.28); /* เส้นขอบบาง */
+  --hairline-gold: rgba(232, 185, 107, 0.5);
+
+  /* ── Elevation (เงาโทนอมชมพู) ── */
+  --shadow-1: 0 2px 8px rgba(214, 46, 79, 0.08);
+  --shadow-2: 0 8px 24px rgba(214, 46, 79, 0.12);
+  --shadow-3: 0 16px 44px rgba(214, 46, 79, 0.2);
+  --shadow-4: 0 24px 60px rgba(122, 30, 51, 0.26);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  /* alias เดิม (คงไว้ให้ของเก่าใช้ได้) */
+  --shadow-card: var(--shadow-2);
+  --shadow-pop: var(--shadow-3);
+
+  /* ── Radius scale ── */
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 20px;
+  --r-xl: 26px;
+
+  /* ── Gradients ── */
+  --grad-primary: linear-gradient(135deg, var(--rose), var(--cherry));
+  --grad-deep: linear-gradient(135deg, #7a1e33, #d62e4f);
+
+  /* ── Layout / motion ── */
   --app-max: 430px;
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* safe-area helpers */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
 }

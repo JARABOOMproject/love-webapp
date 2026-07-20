@@ -78,13 +78,22 @@ export default function Jigsaw({ onBack }) {
     >
       <div className="flex flex-1 flex-col items-center justify-center">
         <div
-          className="paper-texture relative rounded-card bg-white p-3 shadow-card"
-          style={{ border: '1px solid rgba(247,108,138,0.25)' }}
+          className="paper-texture relative bg-white p-3"
+          style={{
+            borderRadius: 'var(--r-xl)',
+            border: '1px solid var(--hairline-gold)',
+            boxShadow: 'var(--shadow-3)',
+          }}
         >
           <span className="washi" aria-hidden />
           <div
             className="relative overflow-hidden rounded-xl bg-blush/30"
-            style={{ width: BOARD, height: BOARD, touchAction: 'manipulation' }}
+            style={{
+              width: BOARD,
+              height: BOARD,
+              touchAction: 'manipulation',
+              boxShadow: 'inset 0 2px 10px rgba(122,30,51,0.12)',
+            }}
           >
             {/* ghost preview จาง ๆ ช่วยให้ต่อง่ายขึ้น */}
             <img
@@ -155,8 +164,11 @@ export default function Jigsaw({ onBack }) {
           </div>
         </div>
 
-        <div className="mt-4 flex items-center gap-3">
-          <p className="text-sm text-wine/60">
+        <div className="mt-5 flex items-center gap-3">
+          <p
+            className="rounded-full px-3.5 py-1.5 text-sm font-medium"
+            style={{ background: 'rgba(255,217,227,0.55)', color: 'var(--ink)' }}
+          >
             {done ? 'ต่อครบแล้ว! 🎉' : `${solvedCount}/${n} ชิ้น`}
           </p>
           {!done && (
@@ -164,8 +176,7 @@ export default function Jigsaw({ onBack }) {
               onPointerDown={() => setPeek(true)}
               onPointerUp={() => setPeek(false)}
               onPointerLeave={() => setPeek(false)}
-              className="flex items-center gap-1 rounded-full bg-blush/80 px-3 py-1 text-sm text-wine"
-              style={{ border: '1px solid var(--rose)' }}
+              className="btn-ghost"
             >
               👁 ดูตัวอย่าง
             </button>

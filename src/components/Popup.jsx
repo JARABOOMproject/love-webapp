@@ -8,15 +8,24 @@ export default function Popup({ open, onClose, children, dismissable = true }) {
       {open && (
         <motion.div
           className="fixed inset-0 z-50 flex items-center justify-center p-5"
-          style={{ background: 'rgba(247,108,138,0.28)', backdropFilter: 'blur(6px)' }}
+          style={{
+            background: 'rgba(122,30,51,0.32)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            paddingBottom: 'calc(1.25rem + var(--sab))',
+          }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={dismissable ? onClose : undefined}
         >
           <motion.div
-            className="paper-texture relative w-full max-w-[360px] rounded-[22px] bg-paper p-5 shadow-pop"
-            style={{ border: '1px solid rgba(232,185,107,0.4)' }}
+            className="paper-texture relative w-full max-w-[360px] bg-paper p-5"
+            style={{
+              borderRadius: 'var(--r-xl)',
+              border: '1px solid var(--hairline-gold)',
+              boxShadow: 'var(--shadow-4)',
+            }}
             initial={{ scale: 0.8, y: 24, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.85, y: 12, opacity: 0 }}
@@ -32,7 +41,7 @@ export default function Popup({ open, onClose, children, dismissable = true }) {
               <button
                 onClick={onClose}
                 aria-label="ปิด"
-                className="absolute right-3 top-3 z-10 grid h-8 w-8 place-items-center rounded-full text-wine/60 transition hover:bg-blush/60"
+                className="absolute right-2.5 top-2.5 z-10 grid h-9 w-9 place-items-center rounded-full text-wine/70 transition hover:bg-blush/60 active:scale-90"
               >
                 ✕
               </button>

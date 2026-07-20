@@ -12,8 +12,9 @@ export default function FloatingHearts({ count = 10 }) {
         left: 6 + ((i * 9.7) % 88),
         size: 10 + ((i * 7) % 16),
         delay: (i * 1.3) % 8,
-        dur: 9 + ((i * 3) % 7),
-        opacity: 0.12 + ((i * 5) % 10) / 60,
+        dur: 10 + ((i * 3) % 8),
+        opacity: 0.1 + ((i * 5) % 10) / 80,
+        blur: (i % 3) * 0.6,
       })),
     [count]
   )
@@ -31,6 +32,7 @@ export default function FloatingHearts({ count = 10 }) {
             fontSize: `${h.size}px`,
             color: 'var(--rose)',
             opacity: h.opacity,
+            filter: h.blur ? `blur(${h.blur}px)` : undefined,
             animationDelay: `${h.delay}s`,
             animationDuration: `${h.dur}s`,
           }}

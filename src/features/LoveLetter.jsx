@@ -139,8 +139,16 @@ function Letter() {
       initial={{ opacity: 0, scale: 0.7, y: 30 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 200, damping: 22 }}
-      className="paper-texture relative max-h-[64vh] w-full overflow-y-auto rounded-card bg-[#fffdf8] px-5 py-6 shadow-pop"
-      style={{ border: '1px solid rgba(232,185,107,0.5)' }}
+      className="relative max-h-[66dvh] w-full overflow-y-auto px-6 py-7"
+      style={{
+        borderRadius: 'var(--r-xl)',
+        border: '1px solid var(--hairline-gold)',
+        boxShadow: 'var(--shadow-4)',
+        background:
+          'repeating-linear-gradient(#fffdf8 0 30px, rgba(214,46,79,0.05) 30px 31px)',
+        outline: '1px solid rgba(232,185,107,0.25)',
+        outlineOffset: '-6px',
+      }}
     >
       {/* รูปโพลารอยด์เล็ก + เทปวาชิ */}
       {hasImg && (
@@ -168,12 +176,13 @@ function Letter() {
         </div>
       )}
 
-      <div className="whitespace-pre-line text-center font-hand text-xl leading-relaxed text-wine">
+      <div className="relative whitespace-pre-line text-center font-hand text-xl leading-relaxed text-wine">
         {CONFIG.letter.text}
       </div>
 
-      <div className="mt-4 text-right font-hand text-lg text-cherry">
-        — {CONFIG.coupleNames.me}
+      <div className="mt-5 flex items-center justify-end gap-2">
+        <span className="h-px w-10 bg-gold/50" aria-hidden />
+        <span className="font-hand text-lg text-cherry">— {CONFIG.coupleNames.me}</span>
       </div>
     </motion.div>
   )

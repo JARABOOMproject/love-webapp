@@ -44,41 +44,59 @@ export default function PinLogin({ onUnlock }) {
 
   return (
     <div
-      className="relative flex min-h-screen flex-col items-center justify-center px-8"
+      className="relative flex min-h-dvh flex-col items-center justify-center px-8"
       style={{
-        paddingTop: 'env(safe-area-inset-top, 0px)',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        paddingTop: 'calc(var(--sat) + 24px)',
+        paddingBottom: 'calc(var(--sab) + 24px)',
       }}
     >
       <FloatingHearts count={8} />
 
       <div className="relative z-10 flex w-full flex-col items-center">
-        {/* ตราซองจดหมาย */}
+        {/* ตราซองจดหมาย + วงแสงนุ่ม ๆ ด้านหลัง */}
         <motion.div
           initial={{ scale: 0.6, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-          className="mb-6 text-6xl"
+          className="relative mb-5 grid h-24 w-24 place-items-center"
           aria-hidden
         >
-          💌
+          <span
+            className="absolute inset-0 rounded-full"
+            style={{
+              background:
+                'radial-gradient(circle at 50% 45%, rgba(255,217,227,0.9), rgba(255,217,227,0) 70%)',
+            }}
+          />
+          <motion.span
+            className="relative text-[64px] leading-none"
+            style={{ filter: 'drop-shadow(0 8px 18px rgba(214,46,79,0.28))' }}
+            animate={{ y: [0, -4, 0] }}
+            transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            💌
+          </motion.span>
         </motion.div>
 
-        <h1 className="text-center font-display text-2xl text-wine">
+        <h1 className="text-center font-display text-[26px] leading-tight text-wine">
           {CONFIG.pinTitle}
         </h1>
-        <p className="mt-2 text-center text-[15px] text-wine/70">
+
+        {/* เส้นคั่นหัวใจเล็ก ๆ */}
+        <div className="mt-2 flex items-center gap-2 text-cherry/60" aria-hidden>
+          <span className="h-px w-8 bg-gradient-to-r from-transparent to-rose/60" />
+          <span className="text-xs">♥</span>
+          <span className="h-px w-8 bg-gradient-to-l from-transparent to-rose/60" />
+        </div>
+
+        <p className="mt-2 text-center text-[15px]" style={{ color: 'var(--ink-soft)' }}>
           {CONFIG.pinPrompt}
         </p>
 
         {/* dots — ว่าง → หัวใจเมื่อกด */}
         <motion.div
-          className="mt-8 flex gap-3"
-          animate={
-            status === 'wrong'
-              ? { x: [0, -10, 10, -8, 8, -4, 0] }
-              : { x: 0 }
-          }
+          className="mt-8 flex gap-3.5"
+          animate={status === 'wrong' ? { x: [0, -10, 10, -8, 8, -4, 0] } : { x: 0 }}
           transition={{ duration: 0.4 }}
         >
           {Array.from({ length: PIN_LEN }).map((_, i) => {
@@ -88,32 +106,32 @@ export default function PinLogin({ onUnlock }) {
             return (
               <motion.div
                 key={i}
-                className="grid h-6 w-6 place-items-center"
-                animate={
-                  ok
-                    ? { scale: [1, 1.4, 1] }
-                    : { scale: 1 }
-                }
-                transition={
-                  ok
-                    ? { duration: 0.5, repeat: 1, delay: i * 0.05 }
-                    : {}
-                }
+                className="grid h-7 w-7 place-items-center"
+                animate={ok ? { scale: [1, 1.4, 1] } : { scale: 1 }}
+                transition={ok ? { duration: 0.5, repeat: 1, delay: i * 0.05 } : {}}
               >
                 {filled ? (
-                  <span
-                    className="text-[22px] leading-none"
-                    style={{ color: wrong ? '#e11' : 'var(--cherry)' }}
+                  <motion.span
+                    initial={{ scale: 0.4, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+                    className="text-[23px] leading-none"
+                    style={{
+                      color: wrong ? '#e0113a' : 'var(--cherry)',
+                      filter: ok
+                        ? 'drop-shadow(0 0 8px rgba(214,46,79,0.6))'
+                        : 'drop-shadow(0 2px 3px rgba(214,46,79,0.25))',
+                    }}
                   >
                     ♥
-                  </span>
+                  </motion.span>
                 ) : (
                   <span
                     className="block h-3 w-3 rounded-full"
                     style={{
-                      background: 'transparent',
-                      border: `2px solid ${wrong ? '#e11' : 'var(--rose)'}`,
-                      opacity: 0.6,
+                      background: 'rgba(255,255,255,0.35)',
+                      border: `2px solid ${wrong ? '#e0113a' : 'var(--rose)'}`,
+                      opacity: 0.55,
                     }}
                   />
                 )}
@@ -125,16 +143,16 @@ export default function PinLogin({ onUnlock }) {
         {/* numpad */}
         <div className="mt-9 grid grid-cols-3 gap-4">
           {keys.map((k, i) => {
-            if (k === '')
-              return <div key={i} className="h-16 w-16" aria-hidden />
+            if (k === '') return <div key={i} className="h-16 w-16" aria-hidden />
             if (k === 'del')
               return (
                 <motion.button
                   key={i}
-                  whileTap={{ scale: 0.9 }}
+                  whileTap={{ scale: 0.88 }}
                   onClick={del}
                   aria-label="ลบ"
-                  className="grid h-16 w-16 place-items-center rounded-full text-2xl text-wine/70 transition active:bg-blush/60"
+                  className="grid h-16 w-16 place-items-center rounded-full text-2xl transition active:bg-blush/60"
+                  style={{ color: 'var(--ink-soft)' }}
                 >
                   ⌫
                 </motion.button>
@@ -144,8 +162,14 @@ export default function PinLogin({ onUnlock }) {
                 key={i}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => press(k)}
-                className="grid h-16 w-16 place-items-center rounded-full bg-white/70 font-display text-2xl text-wine shadow-card transition active:bg-blush"
-                style={{ border: '1px solid rgba(247,108,138,0.35)' }}
+                className="grid h-16 w-16 place-items-center rounded-full font-display text-2xl text-wine transition active:bg-blush"
+                style={{
+                  background:
+                    'linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.7))',
+                  border: '1px solid rgba(247,108,138,0.35)',
+                  boxShadow:
+                    '0 6px 14px rgba(214,46,79,0.14), inset 0 1px 0 rgba(255,255,255,0.9)',
+                }}
               >
                 {k}
               </motion.button>

@@ -132,13 +132,22 @@ export default function ScratchCard({ onBack }) {
     <FeatureShell onBack={onBack} title="ขูดหัวใจ" subtitle="ขูดไปเรื่อย ๆ เดี๋ยวมีเซอร์ไพรส์">
       <div className="flex flex-1 flex-col items-center justify-center">
         <div
-          className="paper-texture relative rounded-card bg-white p-3 shadow-card"
-          style={{ border: '1px solid rgba(247,108,138,0.25)' }}
+          className="paper-texture relative bg-white p-3 pb-4"
+          style={{
+            borderRadius: 'var(--r-xl)',
+            border: '1px solid var(--hairline-gold)',
+            boxShadow: 'var(--shadow-3)',
+          }}
         >
           <span className="washi" aria-hidden />
           <div
             className="relative overflow-hidden rounded-xl"
-            style={{ width: SIZE, height: SIZE, touchAction: 'none' }}
+            style={{
+              width: SIZE,
+              height: SIZE,
+              touchAction: 'none',
+              boxShadow: 'inset 0 2px 10px rgba(122,30,51,0.12)',
+            }}
           >
             <canvas
               ref={baseRef}
@@ -160,13 +169,17 @@ export default function ScratchCard({ onBack }) {
         </div>
 
         {/* progress */}
-        <div className="mt-5 h-2 w-56 overflow-hidden rounded-full bg-blush/60">
+        <div
+          className="mt-6 h-2.5 w-60 overflow-hidden rounded-full"
+          style={{ background: 'rgba(255,217,227,0.7)', boxShadow: 'inset 0 1px 2px rgba(122,30,51,0.12)' }}
+        >
           <motion.div
             className="h-full rounded-full bg-gradient-to-r from-rose to-cherry"
+            style={{ boxShadow: '0 0 8px rgba(214,46,79,0.4)' }}
             animate={{ width: `${Math.min(100, Math.round((pct / THRESHOLD) * 100))}%` }}
           />
         </div>
-        <p className="mt-2 text-sm text-wine/60">
+        <p className="mt-2.5 text-sm font-medium" style={{ color: 'var(--ink-soft)' }}>
           {revealed ? 'เผยแล้ว 💗' : `ขูดไปแล้ว ${Math.round(pct * 100)}%`}
         </p>
       </div>

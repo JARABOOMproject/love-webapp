@@ -94,6 +94,21 @@ export default function Gacha({ onBack }) {
               boxShadow: 'inset 0 6px 16px rgba(255,255,255,0.6), 0 10px 24px rgba(214,46,79,0.2)',
             }}
           >
+            {/* แสงสะท้อนบนโดมแก้ว */}
+            <span
+              className="pointer-events-none absolute z-[2]"
+              style={{
+                left: '18%',
+                top: '12%',
+                width: '34%',
+                height: '22%',
+                borderRadius: '50%',
+                background:
+                  'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(255,255,255,0) 70%)',
+                transform: 'rotate(-18deg)',
+              }}
+              aria-hidden
+            />
             {/* แคปซูลกองอยู่ */}
             {[
               { l: 22, t: 78, c: 0 },
@@ -112,7 +127,8 @@ export default function Gacha({ onBack }) {
             className="mx-auto -mt-3 h-32 w-44 rounded-2xl"
             style={{
               background: 'linear-gradient(160deg, #e8455f, #d62e4f 60%, #a51f38)',
-              boxShadow: '0 12px 26px rgba(214,46,79,0.35)',
+              boxShadow:
+                '0 12px 26px rgba(214,46,79,0.35), inset 0 2px 0 rgba(255,255,255,0.35), inset 0 -10px 20px rgba(0,0,0,0.18)',
             }}
           >
             {/* หมุนบิด */}
@@ -162,10 +178,17 @@ export default function Gacha({ onBack }) {
               </div>
             </div>
           </div>
+
+          {/* เงาใต้ตู้ */}
+          <div
+            className="mx-auto mt-2 h-3 w-36 rounded-[50%]"
+            style={{ background: 'radial-gradient(50% 100% at 50% 0%, rgba(122,30,51,0.28), rgba(122,30,51,0))' }}
+            aria-hidden
+          />
         </motion.div>
 
         {/* คำใบ้จังหวะ */}
-        <p className="mt-6 h-6 text-sm text-wine/60">
+        <p className="mt-5 h-6 text-sm" style={{ color: 'var(--ink-soft)' }}>
           {phase === 'idle' && 'แตะปุ่มกลางเพื่อบิดกาชา 🎰'}
           {phase === 'twisting' && 'กำลังบิด…'}
           {phase === 'dropped' && 'แตะแคปซูลเพื่อเปิด! 👆'}
@@ -183,9 +206,14 @@ export default function Gacha({ onBack }) {
       <Popup open={showCard} onClose={again}>
         <div className="pt-2 text-center">
           <div className="mb-3 text-4xl">💝</div>
-          <p className="font-hand text-2xl leading-relaxed text-wine">
-            {result?.text}
-          </p>
+          <div
+            className="mx-auto rounded-2xl px-4 py-4"
+            style={{ background: 'rgba(255,217,227,0.35)', border: '1px solid var(--hairline)' }}
+          >
+            <p className="font-hand text-2xl leading-relaxed text-wine">
+              {result?.text}
+            </p>
+          </div>
           <button onClick={again} className="btn-love mt-6">
             สุ่มอีกครั้ง 🎰
           </button>

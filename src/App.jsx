@@ -27,13 +27,18 @@ const pageTransition = { duration: 0.3, ease: [0.4, 0, 0.2, 1] }
 function GalleryLoading() {
   return (
     <div
-      className="grid min-h-screen place-items-center text-white"
+      className="grid min-h-dvh place-items-center text-white"
       style={{ background: 'linear-gradient(160deg,#f76c8a,#a51f38 60%,#5c1526)' }}
     >
-      <div className="animate-pulse text-center">
-        <div className="text-4xl">♥</div>
-        <p className="mt-3 text-sm text-white/80">กำลังโหลดความทรงจำ…</p>
+      <div className="text-center">
+        <div
+          className="mx-auto mb-4 h-10 w-10 rounded-full border-2 border-white/25 border-t-white"
+          style={{ animation: 'galSpin 0.9s linear infinite' }}
+        />
+        <div className="animate-pulse text-4xl drop-shadow">♥</div>
+        <p className="mt-3 text-sm tracking-wide text-white/85">กำลังโหลดความทรงจำ…</p>
       </div>
+      <style>{`@keyframes galSpin { to { transform: rotate(360deg) } }`}</style>
     </div>
   )
 }
@@ -90,7 +95,7 @@ export default function App() {
   return (
     <div className="min-h-full w-full">
       {/* กรอบแอป mobile-first กึ่งกลาง */}
-      <div className="relative mx-auto min-h-screen w-full max-w-app overflow-hidden bg-paper shadow-[0_0_60px_rgba(214,46,79,0.10)]">
+      <div className="relative mx-auto min-h-dvh w-full max-w-app overflow-hidden bg-paper shadow-[0_0_80px_rgba(214,46,79,0.12)]">
         <AnimatePresence mode="wait">
           {view === 'pin' && (
             <motion.div
@@ -100,7 +105,7 @@ export default function App() {
               animate="animate"
               exit="exit"
               transition={pageTransition}
-              className="min-h-screen"
+              className="min-h-dvh"
             >
               <PinLogin onUnlock={handleUnlock} />
             </motion.div>
@@ -114,7 +119,7 @@ export default function App() {
               animate="animate"
               exit="exit"
               transition={pageTransition}
-              className="min-h-screen"
+              className="min-h-dvh"
             >
               <Portal onOpen={setView} />
             </motion.div>
@@ -128,7 +133,7 @@ export default function App() {
               animate="animate"
               exit="exit"
               transition={pageTransition}
-              className="min-h-screen"
+              className="min-h-dvh"
             >
               {renderFeature()}
             </motion.div>

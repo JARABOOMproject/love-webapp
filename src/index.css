@@ -20,17 +20,21 @@ body,
 body {
   margin: 0;
   font-family: '"IBM Plex Sans Thai"', system-ui, sans-serif;
-  color: var(--wine);
+  color: var(--ink);
   background: var(--paper);
   overscroll-behavior: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+  letter-spacing: 0.005em;
 }
 
-/* พื้นหลังนอกกรอบแอปบนจอใหญ่ */
+/* พื้นหลังนอกกรอบแอปบนจอใหญ่ + มิติ/vignette จาง ๆ */
 #root {
+  position: relative;
   background:
-    radial-gradient(120% 90% at 50% -10%, #ffe9ef 0%, var(--paper) 45%, #ffeee6 100%);
+    radial-gradient(130% 80% at 50% -8%, #ffe9ef 0%, var(--paper) 42%, #ffeee6 100%);
 }
 
 h1,
@@ -39,11 +43,26 @@ h3 {
   font-family: 'Mitr', system-ui, sans-serif;
   font-weight: 600;
   margin: 0;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
 }
 
 button {
   font-family: inherit;
   cursor: pointer;
+}
+
+img {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* ─────────────────────────────────────────────
+   Mobile viewport height (กัน URL bar เด้ง)
+   ───────────────────────────────────────────── */
+.min-h-dvh {
+  min-height: 100vh; /* fallback */
+  min-height: 100dvh;
 }
 
 /* ─────────────────────────────────────────────
@@ -62,6 +81,54 @@ button {
   background-size: 14px 14px;
   border-radius: inherit;
   z-index: 0;
+}
+
+/* ─────────────────────────────────────────────
+   Surface: การ์ดหลักที่ใช้ซ้ำทุกฟีเจอร์
+   ───────────────────────────────────────────── */
+.card-love {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), var(--surface));
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-2), var(--shadow-inset);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+/* จุด texture จาง ๆ ในการ์ด */
+.card-love::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(214, 46, 79, 0.03) 1px, transparent 1px);
+  background-size: 14px 14px;
+  border-radius: inherit;
+  z-index: 0;
+}
+.card-love > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ─────────────────────────────────────────────
+   Chip / pill label
+   ───────────────────────────────────────────── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 15px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink);
+  background: rgba(255, 217, 227, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: var(--shadow-1);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
 }
 
 /* ─────────────────────────────────────────────
@@ -124,26 +191,89 @@ button {
   transform: rotate(-2deg);
 }
 
+/* ─────────────────────────────────────────────
+   Buttons
+   ───────────────────────────────────────────── */
 /* Primary pill button */
 .btn-love {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 14px 26px;
+  min-height: 48px;
+  padding: 13px 26px;
   border: none;
   border-radius: 999px;
   color: #fff;
   font-family: 'Mitr', sans-serif;
   font-weight: 500;
   font-size: 16px;
-  background: linear-gradient(135deg, var(--rose), var(--cherry));
-  box-shadow: 0 8px 20px rgba(214, 46, 79, 0.32);
-  transition: transform 0.12s var(--ease-spring), box-shadow 0.12s ease;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  background: var(--grad-primary);
+  box-shadow: 0 10px 22px rgba(214, 46, 79, 0.32), var(--shadow-inset);
+  transition:
+    transform 0.14s var(--ease-spring),
+    box-shadow 0.14s ease,
+    filter 0.14s ease;
+}
+/* sheen เบา ๆ พาดบนปุ่ม */
+.btn-love::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.28),
+    rgba(255, 255, 255, 0) 45%
+  );
+  pointer-events: none;
+}
+.btn-love:hover {
+  filter: brightness(1.03);
+  box-shadow: 0 14px 28px rgba(214, 46, 79, 0.38), var(--shadow-inset);
 }
 .btn-love:active {
   transform: scale(0.96);
   box-shadow: 0 4px 12px rgba(214, 46, 79, 0.3);
+}
+.btn-love:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.9),
+    0 0 0 5.5px var(--rose),
+    0 10px 22px rgba(214, 46, 79, 0.32);
+}
+
+/* Secondary / ghost pill button */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-family: 'Mitr', sans-serif;
+  font-weight: 500;
+  font-size: 14.5px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-1);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  transition: transform 0.14s var(--ease-spring), background 0.14s ease;
+}
+.btn-ghost:active {
+  transform: scale(0.95);
+  background: rgba(255, 217, 227, 0.85);
+}
+.btn-ghost:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(247, 108, 138, 0.4);
 }
 
 /* Scrollbars — subtle */

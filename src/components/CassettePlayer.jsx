@@ -214,7 +214,8 @@ export default function CassettePlayer({ playlistId, kick = 0 }) {
             animate={{ scale: 1, opacity: 1 }}
             onClick={() => setMinimized(false)}
             aria-label="ขยายเครื่องเล่นเพลง"
-            className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-rose to-cherry text-xl text-white shadow-pop"
+            className="grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-rose to-cherry text-xl text-white"
+            style={{ border: '1.5px solid rgba(255,255,255,0.6)', boxShadow: 'var(--shadow-3)' }}
           >
             🎵
           </motion.button>
@@ -223,18 +224,19 @@ export default function CassettePlayer({ playlistId, kick = 0 }) {
             initial={{ scale: 0.7, opacity: 0, y: 10 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 22 }}
-            className="relative select-none rounded-2xl p-3 shadow-pop"
+            className="relative select-none rounded-2xl p-3"
             style={{
-              width: 168,
+              width: 172,
               background: 'linear-gradient(135deg, #7a1e33, #d62e4f)',
-              border: '1px solid rgba(232,185,107,0.5)',
+              border: '1px solid rgba(232,185,107,0.55)',
+              boxShadow: 'var(--shadow-4), inset 0 1px 0 rgba(255,255,255,0.15)',
             }}
           >
             {/* ปุ่มย่อ */}
             <button
               onClick={() => setMinimized(true)}
               aria-label="ย่อ"
-              className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-paper text-xs text-wine shadow"
+              className="absolute -right-2 -top-2 grid h-7 w-7 place-items-center rounded-full bg-paper text-sm text-wine shadow active:scale-90"
             >
               –
             </button>
@@ -284,13 +286,13 @@ export default function CassettePlayer({ playlistId, kick = 0 }) {
             </div>
 
             {/* ปุ่มควบคุม */}
-            <div className="mt-2.5 flex items-center justify-center gap-2 text-paper">
+            <div className="mt-3 flex items-center justify-center gap-2.5 text-paper">
               {canSkip && (
                 <button
                   onClick={handlePrevious}
                   disabled={historyLen === 0}
                   aria-label="เพลงก่อนหน้า"
-                  className="grid h-8 w-8 place-items-center rounded-full bg-white/20 text-sm active:scale-90 disabled:opacity-30"
+                  className="grid h-9 w-9 place-items-center rounded-full bg-white/20 text-sm transition active:scale-90 disabled:opacity-30"
                 >
                   ⏮
                 </button>
@@ -298,7 +300,8 @@ export default function CassettePlayer({ playlistId, kick = 0 }) {
               <button
                 onClick={toggle}
                 aria-label={playing ? 'หยุด' : 'เล่น'}
-                className="grid h-8 w-8 place-items-center rounded-full bg-white/20 text-sm active:scale-90"
+                className="grid h-11 w-11 place-items-center rounded-full bg-white/25 text-base transition active:scale-90"
+                style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.25)' }}
               >
                 {playing ? '❚❚' : '►'}
               </button>
@@ -306,7 +309,7 @@ export default function CassettePlayer({ playlistId, kick = 0 }) {
                 <button
                   onClick={advanceRandom}
                   aria-label="สุ่มเพลงถัดไป"
-                  className="grid h-8 w-8 place-items-center rounded-full bg-white/20 text-sm active:scale-90"
+                  className="grid h-9 w-9 place-items-center rounded-full bg-white/20 text-sm transition active:scale-90"
                 >
                   🔀
                 </button>
