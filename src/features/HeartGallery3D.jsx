@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
+import { AnimatePresence, motion } from 'framer-motion'
 import { CONFIG, asset } from '../config/love.config'
 import { loadImageWithFallback } from '../lib/placeholder'
+import { heartConfetti } from '../lib/confetti'
 import BackButton from '../components/BackButton'
 
-// จุดบนเส้นโค้งหัวใจ (parametric) → ตำแหน่งการ์ดรูป
+// จุดบนเส้นโค้งหัวใจ (parametric) → ใช้จัดอนุภาคให้ก่อตัวเป็นเส้นขอบหัวใจ
 function heartPoint(t) {
   const x = 16 * Math.pow(Math.sin(t), 3)
   const y =
@@ -34,307 +36,280 @@ async function loadTexture(src, label, seed) {
   return { tex, aspect: w / h }
 }
 
+// ลำดับซีน: intro → greeting → scatter → globe → wall → finale
+const NEXT = { scatter: 'globe', globe: 'wall', wall: 'finale' }
+// เวลาอยู่ต่อซีน (ms) — reduce-motion หารครึ่ง
+const DUR = { scatter: 3600, globe: 4600, wall: 3200 }
+
 export default function HeartGallery3D({ onBack }) {
   const mountRef = useRef(null)
-  const [hint, setHint] = useState(true)
+  const sceneRef = useRef('intro')
+  const [scene, setScene] = useState('intro')
+  const [greetIdx, setGreetIdx] = useState(0)
 
+  const reduced =
+    typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+  const story = CONFIG.galleryStory
+  const advance = () => setScene((s) => NEXT[s] || s)
+
+  // บอกลูป Three.js ว่าอยู่ซีนไหน (โดยไม่ re-run effect ก้อนใหญ่)
+  useEffect(() => {
+    sceneRef.current = scene
+  }, [scene])
+
+  // ── ตัวคุมลำดับซีน ──
+  // ข้อความทักทายไล่ทีละบรรทัด
+  useEffect(() => {
+    if (scene !== 'greeting') return
+    if (greetIdx >= story.greetings.length) {
+      setScene('scatter')
+      return
+    }
+    const t = setTimeout(() => setGreetIdx((i) => i + 1), reduced ? 1100 : 1900)
+    return () => clearTimeout(t)
+  }, [scene, greetIdx, reduced, story.greetings.length])
+
+  // scatter / globe / wall เดินหน้าอัตโนมัติ
+  useEffect(() => {
+    if (!(scene in DUR)) return
+    const t = setTimeout(() => advance(), DUR[scene] * (reduced ? 0.5 : 1))
+    return () => clearTimeout(t)
+  }, [scene, reduced])
+
+  // โปรยหัวใจตอนถึงจดหมาย
+  useEffect(() => {
+    if (scene === 'finale') heartConfetti()
+  }, [scene])
+
+  // ── ฉาก Three.js (สร้างครั้งเดียว, อ่านซีนจาก sceneRef ทุกเฟรม) ──
   useEffect(() => {
     const mount = mountRef.current
     const W = mount.clientWidth
     const H = mount.clientHeight
-    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    const lowMotion =
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
-    const scene = new THREE.Scene()
+    const scene3 = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 100)
-    camera.position.set(0, 0, 6.2)
+    camera.position.set(0, 0, 6.5)
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
     renderer.setSize(W, H)
     mount.appendChild(renderer.domElement)
-
-    scene.add(new THREE.AmbientLight(0xffffff, 1))
+    scene3.add(new THREE.AmbientLight(0xffffff, 1))
 
     const group = new THREE.Group()
-    scene.add(group)
+    scene3.add(group)
 
-    // ── heart particles ──
-    const pCount = 90
-    const pGeo = new THREE.BufferGeometry()
-    const pPos = new Float32Array(pCount * 3)
-    const pSpeed = new Float32Array(pCount)
-    for (let i = 0; i < pCount; i++) {
-      pPos[i * 3] = (Math.random() - 0.5) * 11
-      pPos[i * 3 + 1] = (Math.random() - 0.5) * 11
-      pPos[i * 3 + 2] = (Math.random() - 0.5) * 7 - 2
-      pSpeed[i] = 0.004 + Math.random() * 0.006
-    }
-    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3))
-    const heartSprite = makeHeartSprite()
-    const pMat = new THREE.PointsMaterial({
-      size: 0.32,
-      map: heartSprite,
-      transparent: true,
-      color: 0xff9bb3,
-      depthWrite: false,
-      opacity: 0.85,
-    })
-    const points = new THREE.Points(pGeo, pMat)
-    scene.add(points)
-
-    // ── การ์ดรูป ──
-    const imgs = CONFIG.gallery
-    const n = imgs.length
-    const cards = []
-    const cardMeshes = []
-    let disposed = false
-
-    // ย่อการ์ดตามจำนวนรูป (รูปเยอะ = การ์ดเล็กลง ไม่ให้ทับกัน)
-    const IMG = THREE.MathUtils.clamp(3.4 / Math.sqrt(n), 0.34, 0.82)
-    const BORDER = IMG * 0.14
-    const FRAME = IMG + BORDER
-    // ระยะกล้องถอยตามจำนวน เพื่อให้เห็นทั้งหัวใจ
-    camera.position.z = THREE.MathUtils.clamp(5 + n * 0.045, 5.5, 8.5)
+    // ระยะที่มองเห็นบนระนาบการ์ด (z=0) → ใช้จัดเลย์เอาต์ให้พอดีจอ
+    const vH = 2 * camera.position.z * Math.tan((50 * Math.PI) / 360)
+    const vW = vH * (W / H)
 
     // สุ่มแบบคงที่จาก index (เลย์เอาต์เดิมทุกครั้ง)
     const rand = (i, s) => {
       const v = Math.sin(i * 12.9898 + s * 78.233) * 43758.5453
       return v - Math.floor(v)
     }
-    const CENTER = new THREE.Vector3(0, 0.35, 0)
+
+    // ── อนุภาคหัวใจ + เป้าหมายรูปหัวใจ (ซีน intro) ──
+    const pCount = 120
+    const pGeo = new THREE.BufferGeometry()
+    const pPos = new Float32Array(pCount * 3)
+    const pHeart = new Float32Array(pCount * 3) // เป้าหมายเส้นขอบหัวใจ
+    const pSpeed = new Float32Array(pCount)
+    for (let i = 0; i < pCount; i++) {
+      pPos[i * 3] = (Math.random() - 0.5) * 11
+      pPos[i * 3 + 1] = (Math.random() - 0.5) * 11
+      pPos[i * 3 + 2] = (Math.random() - 0.5) * 6 - 1
+      const hp = heartPoint((i / pCount) * Math.PI * 2)
+      pHeart[i * 3] = hp.x * 2.7
+      pHeart[i * 3 + 1] = hp.y * 2.7 + 0.2
+      pHeart[i * 3 + 2] = (rand(i, 5) - 0.5) * 0.5
+      pSpeed[i] = 0.004 + Math.random() * 0.006
+    }
+    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3))
+    const heartSprite = makeHeartSprite()
+    const pMat = new THREE.PointsMaterial({
+      size: 0.3,
+      map: heartSprite,
+      transparent: true,
+      color: 0xff9bb3,
+      depthWrite: false,
+      opacity: 0.9,
+    })
+    const points = new THREE.Points(pGeo, pMat)
+    scene3.add(points)
+
+    // ── เลย์เอาต์รูป: scatter / sphere / wall ──
+    const imgs = CONFIG.gallery
+    const n = imgs.length
+
+    // กริดกำแพงภาพให้พอดีกรอบจอ
+    const cols = Math.max(3, Math.round(Math.sqrt(n * (vW / vH))))
+    const rows = Math.ceil(n / cols)
+    const spX = vW / cols
+    const spY = vH / rows
+    const cell = Math.min(spX, spY)
+    const S = cell * 0.92 // ขนาดการ์ด
+    const R = Math.min(vW, vH) * 0.62 // รัศมีลูกโลก
+
+    const scatterPos = (i) =>
+      new THREE.Vector3(
+        (rand(i, 1) - 0.5) * vW * 1.05,
+        (rand(i, 2) - 0.5) * vH * 0.95,
+        (rand(i, 3) - 0.5) * 2.6
+      )
+    const spherePos = (i) => {
+      const y = 1 - (i / Math.max(1, n - 1)) * 2
+      const r = Math.sqrt(Math.max(0, 1 - y * y))
+      const phi = i * Math.PI * (3 - Math.sqrt(5))
+      return new THREE.Vector3(Math.cos(phi) * r, y, Math.sin(phi) * r).multiplyScalar(R)
+    }
+    const wallPos = (i) => {
+      const c = i % cols
+      const r = Math.floor(i / cols)
+      return new THREE.Vector3(
+        (c - (cols - 1) / 2) * spX,
+        ((rows - 1) / 2 - r) * spY,
+        0
+      )
+    }
+
+    const CENTER = new THREE.Vector3(0, 0, 0)
+    const Z = new THREE.Vector3(0, 0, 1)
+    const cards = []
+    let disposed = false
 
     imgs.forEach((src, i) => {
-      // ทิศทางบนเส้นหัวใจ แล้วดึงเข้าด้านในแบบสุ่ม → เติมเต็มทรงหัวใจ
-      const t = (i / n) * Math.PI * 2 + rand(i, 3) * 0.25
-      const p = heartPoint(t)
-      const boundary = new THREE.Vector3(p.x * 3.4, p.y * 3.4 + 0.35, 0)
-      const r = 0.32 + rand(i, 1) * 0.68
-      const pos = CENTER.clone().lerp(boundary, r)
-      pos.z = (rand(i, 2) - 0.5) * 2.0
-
       const card = new THREE.Group()
-      card.position.copy(pos)
-      card.userData = {
-        base: card.position.clone(),
-        index: i,
-        selected: false,
-        returning: false,
-      }
+      card.position.copy(CENTER)
+      card.scale.setScalar(0.01)
 
-      // กรอบขาว
-      const frame = new THREE.Mesh(
-        new THREE.PlaneGeometry(FRAME, FRAME),
-        new THREE.MeshBasicMaterial({ color: 0xffffff })
-      )
+      const frameMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0,
+      })
+      const frame = new THREE.Mesh(new THREE.PlaneGeometry(S * 1.14, S * 1.14), frameMat)
       frame.position.z = -0.01
       card.add(frame)
 
-      // รูป (placeholder ก่อน แล้วอัปเดตเมื่อโหลดเสร็จ)
-      const imgMat = new THREE.MeshBasicMaterial({ color: 0xffd9e3 })
-      const imgMesh = new THREE.Mesh(new THREE.PlaneGeometry(IMG, IMG), imgMat)
-      imgMesh.userData.card = card
+      const imgMat = new THREE.MeshBasicMaterial({
+        color: 0xffd9e3,
+        transparent: true,
+        opacity: 0,
+      })
+      const imgMesh = new THREE.Mesh(new THREE.PlaneGeometry(S, S), imgMat)
       card.add(imgMesh)
-      card.userData.imgMesh = imgMesh
-      card.userData.imgMat = imgMat
+
+      // เป้าหมายตำแหน่ง/การหันหน้า ต่อซีน
+      const pScatter = scatterPos(i)
+      const pSphere = spherePos(i)
+      const pWall = wallPos(i)
+      const qScatter = new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(0, (rand(i, 6) - 0.5) * 0.3, (rand(i, 7) - 0.5) * 0.4)
+      )
+      const qSphere = new THREE.Quaternion().setFromUnitVectors(
+        Z,
+        pSphere.clone().normalize()
+      )
+      const qWall = new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(0, 0, (rand(i, 8) - 0.5) * 0.06)
+      )
+
+      card.userData = {
+        pScatter, pSphere, pWall, qScatter, qSphere, qWall,
+        frameMat, imgMat, frame, imgMesh,
+      }
 
       group.add(card)
       cards.push(card)
-      cardMeshes.push(imgMesh)
 
       loadTexture(asset(src), `รูปที่ ${i + 1}`, i).then(({ tex, aspect }) => {
         if (disposed) return
         imgMat.map = tex
         imgMat.color.set(0xffffff)
         imgMat.needsUpdate = true
-        // ปรับสัดส่วนการ์ดตามรูป (รูปเราครอปเป็นจัตุรัสอยู่แล้ว aspect≈1)
-        const w = aspect >= 1 ? IMG : IMG * aspect
-        const h = aspect >= 1 ? IMG / aspect : IMG
-        imgMesh.scale.set(w / IMG, h / IMG, 1)
-        frame.scale.set((w + BORDER) / FRAME, (h + BORDER) / FRAME, 1)
+        const w = aspect >= 1 ? S : S * aspect
+        const h = aspect >= 1 ? S / aspect : S
+        imgMesh.scale.set(w / S, h / S, 1)
+        frame.scale.set((w + S * 0.14) / (S * 1.14), (h + S * 0.14) / (S * 1.14), 1)
       })
     })
 
-    // ── interaction ──
-    const raycaster = new THREE.Raycaster()
-    const ndc = new THREE.Vector2()
-    let selected = null
-    let autoRot = !reduced
-
-    let dragging = false
-    let moved = 0
-    let lastX = 0
-    let lastY = 0
-    let velY = 0
-
-    // pinch
-    let pinchStart = 0
-    const pointers = new Map()
-
-    const dom = renderer.domElement
-
-    const onDown = (e) => {
-      dom.setPointerCapture?.(e.pointerId)
-      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
-      if (pointers.size === 2) {
-        const [a, b] = [...pointers.values()]
-        pinchStart = Math.hypot(a.x - b.x, a.y - b.y)
-      } else {
-        dragging = true
-        moved = 0
-        lastX = e.clientX
-        lastY = e.clientY
-      }
-    }
-    const onMove = (e) => {
-      if (pointers.has(e.pointerId))
-        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
-
-      if (pointers.size === 2) {
-        const [a, b] = [...pointers.values()]
-        const d = Math.hypot(a.x - b.x, a.y - b.y)
-        if (pinchStart) {
-          const delta = (pinchStart - d) * 0.01
-          camera.position.z = THREE.MathUtils.clamp(
-            camera.position.z + delta,
-            4,
-            9
-          )
-          pinchStart = d
-        }
-        return
-      }
-
-      if (!dragging || selected) return
-      const dx = e.clientX - lastX
-      const dy = e.clientY - lastY
-      moved += Math.abs(dx) + Math.abs(dy)
-      group.rotation.y += dx * 0.008
-      group.rotation.x = THREE.MathUtils.clamp(
-        group.rotation.x + dy * 0.006,
-        -0.6,
-        0.6
-      )
-      velY = dx * 0.008
-      lastX = e.clientX
-      lastY = e.clientY
-    }
-    const onUp = (e) => {
-      pointers.delete(e.pointerId)
-      if (pointers.size < 2) pinchStart = 0
-      if (!dragging) return
-      dragging = false
-      if (moved < 8) {
-        handleTap(e)
-      }
-    }
-
-    const handleTap = (e) => {
-      const rect = dom.getBoundingClientRect()
-      ndc.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
-      ndc.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
-      raycaster.setFromCamera(ndc, camera)
-      const hit = raycaster.intersectObjects(cardMeshes, false)[0]
-
-      if (selected) {
-        // แตะที่ไหนก็คืนกลับ
-        deselect()
-        return
-      }
-      if (hit) {
-        select(hit.object.userData.card)
-        setHint(false)
-      }
-    }
-
-    const select = (card) => {
-      selected = card
-      autoRot = false
-      scene.attach(card) // เก็บ world transform, ย้ายมาอยู่ใต้ scene
-      card.userData.selected = true
-      card.userData.returning = false
-      // หรี่การ์ดอื่น
-      cards.forEach((c) => {
-        if (c !== card) c.userData.imgMat.color.multiplyScalar(0.32)
-      })
-    }
-
-    const deselect = () => {
-      if (!selected) return
-      const card = selected
-      selected = null
-      group.attach(card) // คืนเข้า group (คง world transform)
-      card.userData.selected = false
-      card.userData.returning = true
-      cards.forEach((c) => {
-        if (c.userData.imgMat.map) c.userData.imgMat.color.set(0xffffff)
-        else c.userData.imgMat.color.set(0xffd9e3)
-      })
-    }
-
-    dom.addEventListener('pointerdown', onDown)
-    dom.addEventListener('pointermove', onMove)
-    dom.addEventListener('pointerup', onUp)
-    dom.addEventListener('pointercancel', onUp)
-    dom.style.touchAction = 'none'
-
     // ── loop ──
-    const tmp = new THREE.Vector3()
-    const forward = new THREE.Vector3()
     const clock = new THREE.Clock()
+    const tmpV = new THREE.Vector3()
+    const tmpS = new THREE.Vector3()
+    let opacity = 0 // ความทึบรวมของการ์ด (fade in/out)
     let raf
+
     const tick = () => {
       raf = requestAnimationFrame(tick)
       const et = clock.getElapsedTime()
+      const sc = sceneRef.current
+      const layout =
+        sc === 'scatter' ? 'scatter'
+        : sc === 'globe' ? 'sphere'
+        : sc === 'wall' || sc === 'finale' ? 'wall'
+        : 'hidden'
 
-      if (autoRot && !dragging) group.rotation.y += 0.0035
-      else if (!dragging && !selected) {
-        group.rotation.y += velY
-        velY *= 0.94
-      }
-      group.rotation.x += (0 - group.rotation.x) * (selected ? 0.05 : 0.002)
+      // ความทึบเป้าหมาย
+      const targetOp = layout === 'hidden' ? 0 : sc === 'finale' ? 0 : 1
+      opacity += (targetOp - opacity) * 0.08
 
-      // ลอยขึ้น-ลง + โยกเบา ๆ ให้ทรงหัวใจดูมีชีวิต 3 มิติ
-      if (!reduced && !selected) {
-        group.position.y = Math.sin(et * 0.6) * 0.12
-        group.rotation.z = Math.sin(et * 0.4) * 0.028
-      }
+      // หมุนกลุ่ม: ลูกโลกหมุนต่อเนื่อง, ซีนอื่นคลายกลับ 0
+      if (layout === 'sphere') group.rotation.y += lowMotion ? 0.002 : 0.006
+      else group.rotation.y += (0 - group.rotation.y) * 0.05
+      // โยกเบา ๆ ให้มีชีวิต (ยกเว้นกำแพง/จบ ที่อยากให้นิ่งตรง)
+      const bob = layout === 'scatter' || layout === 'sphere'
+      group.position.y = bob && !lowMotion ? Math.sin(et * 0.5) * 0.12 : group.position.y * 0.9
 
-      // หัวใจเกล็ดลอยขึ้น + วนกลับ
-      if (!reduced) {
-        const pa = pGeo.attributes.position
-        for (let i = 0; i < pCount; i++) {
-          pa.array[i * 3 + 1] += pSpeed[i]
-          if (pa.array[i * 3 + 1] > 5.5) pa.array[i * 3 + 1] = -5.5
-        }
-        pa.needsUpdate = true
-      }
-      points.rotation.y += 0.0008
+      cards.forEach((card, i) => {
+        const u = card.userData
+        let tp, tq, ts
+        if (layout === 'hidden') { tp = CENTER; tq = u.qScatter; ts = 0.01 }
+        else if (layout === 'scatter') { tp = u.pScatter; tq = u.qScatter; ts = 1 }
+        else if (layout === 'sphere') { tp = u.pSphere; tq = u.qSphere; ts = 0.9 }
+        else { tp = u.pWall; tq = u.qWall; ts = 1 }
 
-      // การ์ดที่ถูกเลือก → ลอยเข้าหากล้อง
-      if (selected) {
-        camera.getWorldDirection(forward)
-        tmp.copy(camera.position).addScaledVector(forward, 2.6)
-        selected.position.lerp(tmp, 0.12)
-        const zoom = 2.0 / IMG // ให้การ์ดขยายเต็มจอไม่ว่าการ์ดฐานจะเล็กแค่ไหน
-        selected.scale.lerp(new THREE.Vector3(zoom, zoom, zoom), 0.12)
-        selected.lookAt(camera.position)
-      }
-      // การ์ดที่กำลังกลับ
-      cards.forEach((c) => {
-        if (c.userData.returning) {
-          c.position.lerp(c.userData.base, 0.14)
-          c.scale.lerp(new THREE.Vector3(1, 1, 1), 0.14)
-          c.quaternion.slerp(new THREE.Quaternion(), 0.14)
-          if (c.position.distanceTo(c.userData.base) < 0.01) {
-            c.userData.returning = false
-            c.position.copy(c.userData.base)
-            c.scale.set(1, 1, 1)
-            c.quaternion.identity()
-          }
-        }
+        // ดีเลย์ไล่ทีละใบตอน scatter ให้ดูรูปทยอยลอยออกมา
+        const k = layout === 'scatter' ? 0.06 + rand(i, 9) * 0.05 : 0.09
+        card.position.lerp(tp, k)
+        card.quaternion.slerp(tq, k)
+        tmpS.setScalar(ts)
+        card.scale.lerp(tmpS, k)
+
+        u.imgMat.opacity = opacity
+        u.frameMat.opacity = opacity
       })
 
-      renderer.render(scene, camera)
+      // อนุภาค: intro → ดูดเข้าเส้นหัวใจ, ซีนอื่น → ลอยขึ้นเบา ๆ แล้วหรี่ลง
+      const pa = pGeo.attributes.position
+      if (sc === 'intro') {
+        for (let i = 0; i < pCount; i++) {
+          pa.array[i * 3] += (pHeart[i * 3] - pa.array[i * 3]) * 0.06
+          pa.array[i * 3 + 1] += (pHeart[i * 3 + 1] - pa.array[i * 3 + 1]) * 0.06
+          pa.array[i * 3 + 2] += (pHeart[i * 3 + 2] - pa.array[i * 3 + 2]) * 0.06
+        }
+        pMat.opacity += (0.95 - pMat.opacity) * 0.05
+      } else {
+        if (!lowMotion) {
+          for (let i = 0; i < pCount; i++) {
+            pa.array[i * 3 + 1] += pSpeed[i]
+            if (pa.array[i * 3 + 1] > 5.5) pa.array[i * 3 + 1] = -5.5
+          }
+        }
+        const pTarget = sc === 'greeting' ? 0.85 : 0.28
+        pMat.opacity += (pTarget - pMat.opacity) * 0.04
+      }
+      pa.needsUpdate = true
+      points.rotation.y += 0.0006
+
+      renderer.render(scene3, camera)
     }
     tick()
 
@@ -347,20 +322,12 @@ export default function HeartGallery3D({ onBack }) {
     }
     window.addEventListener('resize', onResize)
 
-    // hide hint
-    const hintTimer = setTimeout(() => setHint(false), 4000)
-
     return () => {
       disposed = true
       cancelAnimationFrame(raf)
-      clearTimeout(hintTimer)
       window.removeEventListener('resize', onResize)
-      dom.removeEventListener('pointerdown', onDown)
-      dom.removeEventListener('pointermove', onMove)
-      dom.removeEventListener('pointerup', onUp)
-      dom.removeEventListener('pointercancel', onUp)
       renderer.dispose()
-      scene.traverse((o) => {
+      scene3.traverse((o) => {
         if (o.geometry) o.geometry.dispose()
         if (o.material) {
           if (o.material.map) o.material.map.dispose()
@@ -373,39 +340,188 @@ export default function HeartGallery3D({ onBack }) {
     }
   }, [])
 
+  const showSkip = scene === 'scatter' || scene === 'globe' || scene === 'wall'
+
   return (
     <div
-      className="relative min-h-dvh"
+      className="relative min-h-dvh overflow-hidden"
       style={{
-        background: 'linear-gradient(160deg, #f76c8a 0%, #a51f38 60%, #5c1526 100%)',
+        background: 'linear-gradient(180deg, #2a0713 0%, #5c1526 45%, #a51f38 100%)',
       }}
     >
       <BackButton onBack={onBack} />
       <div ref={mountRef} className="absolute inset-0 h-full w-full" />
 
-      <div
-        className="pointer-events-none absolute left-0 right-0 text-center"
-        style={{ top: 'calc(env(safe-area-inset-top,0px) + 70px)' }}
-      >
-        <h2
-          className="foil-text-deep font-display text-2xl"
-          style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.35))' }}
-        >
-          แกลเลอรีหัวใจ
-        </h2>
-        <div className="mx-auto mt-1.5 flex w-24 items-center gap-2 opacity-80" aria-hidden>
-          <span className="foil-line flex-1" />
-          <span className="text-[10px]" style={{ color: '#f6d78a' }}>♥</span>
-          <span className="foil-line flex-1" />
-        </div>
-      </div>
+      {/* ชั้นแตะเพื่อไปต่อ ระหว่างซีนรูป */}
+      {showSkip && (
+        <button
+          onClick={advance}
+          aria-label="ไปต่อ"
+          className="absolute inset-0 h-full w-full cursor-pointer bg-transparent"
+        />
+      )}
 
-      {hint && (
-        <div className="pointer-events-none absolute bottom-24 left-0 right-0 text-center text-sm text-white/80">
-          ลากเพื่อหมุน · แตะรูปเพื่อขยาย
+      <AnimatePresence mode="wait">
+        {/* ── intro: กดค้างเพื่อเริ่ม ── */}
+        {scene === 'intro' && (
+          <motion.div
+            key="intro"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="pointer-events-none absolute inset-0 grid place-items-center"
+          >
+            <HoldToStart
+              label={story.holdHint}
+              reduced={reduced}
+              onStart={() => setScene('greeting')}
+            />
+          </motion.div>
+        )}
+
+        {/* ── greeting: ข้อความทักทายไล่บรรทัด ── */}
+        {scene === 'greeting' && (
+          <motion.button
+            key={`greet-${greetIdx}`}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: 0.5 }}
+            onClick={() => setGreetIdx((i) => i + 1)}
+            className="absolute inset-0 grid place-items-center px-8"
+          >
+            <span className="foil-text-deep text-center font-display text-3xl leading-snug">
+              {story.greetings[Math.min(greetIdx, story.greetings.length - 1)]}
+            </span>
+          </motion.button>
+        )}
+
+        {/* ── finale: ผีเสื้อ + จดหมาย ── */}
+        {scene === 'finale' && (
+          <motion.div
+            key="finale"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 grid place-items-center px-5 py-16"
+          >
+            <FinaleLetter story={story} sender={CONFIG.coupleNames.me} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {showSkip && (
+        <div className="pointer-events-none absolute bottom-6 left-0 right-0 text-center text-xs text-white/55">
+          แตะเพื่อไปต่อ ›
         </div>
       )}
     </div>
+  )
+}
+
+// ── ปุ่มกดค้างเพื่อเริ่ม (มีวงแหวนเติมความคืบหน้า) ──
+function HoldToStart({ label, onStart, reduced }) {
+  const [holding, setHolding] = useState(false)
+  const timer = useRef(null)
+  const HOLD = reduced ? 250 : 750
+  const C = 2 * Math.PI * 46 // เส้นรอบวง
+
+  const begin = () => {
+    setHolding(true)
+    timer.current = setTimeout(() => {
+      setHolding(false)
+      onStart()
+    }, HOLD)
+  }
+  const cancel = () => {
+    setHolding(false)
+    clearTimeout(timer.current)
+  }
+  useEffect(() => () => clearTimeout(timer.current), [])
+
+  return (
+    <div className="pointer-events-auto flex flex-col items-center">
+      <button
+        onPointerDown={begin}
+        onPointerUp={cancel}
+        onPointerLeave={cancel}
+        onPointerCancel={cancel}
+        aria-label={label}
+        className="relative grid h-32 w-32 select-none place-items-center"
+        style={{ touchAction: 'none' }}
+      >
+        <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="3" />
+          <circle
+            cx="50" cy="50" r="46" fill="none"
+            stroke="#ffd1dd" strokeWidth="3" strokeLinecap="round"
+            strokeDasharray={C}
+            strokeDashoffset={holding ? 0 : C}
+            style={{ transition: `stroke-dashoffset ${HOLD}ms linear` }}
+          />
+        </svg>
+        <motion.span
+          className="text-5xl"
+          style={{ color: '#ff9bb3', filter: 'drop-shadow(0 2px 8px rgba(255,120,150,0.6))' }}
+          animate={holding ? { scale: 1.18 } : { scale: [1, 1.08, 1] }}
+          transition={holding ? { duration: 0.75 } : { duration: 1.6, repeat: Infinity }}
+        >
+          ♥
+        </motion.span>
+      </button>
+      <p className="mt-4 text-sm tracking-wide text-white/85">{label}</p>
+    </div>
+  )
+}
+
+// ── จดหมายตอนจบ + ผีเสื้อ ──
+function FinaleLetter({ story, sender }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8, y: 30 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ type: 'spring', stiffness: 190, damping: 22 }}
+      className="relative w-full max-w-app"
+    >
+      {/* ผีเสื้อสีชมพู */}
+      <motion.span
+        className="absolute -left-1 -top-6 z-10 text-4xl"
+        style={{ filter: 'hue-rotate(285deg) saturate(1.6) drop-shadow(0 3px 6px rgba(180,40,90,0.4))' }}
+        animate={{ y: [0, -6, 0], rotate: [-6, 6, -6] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+        aria-hidden
+      >
+        🦋
+      </motion.span>
+
+      <div
+        className="max-h-[74dvh] overflow-y-auto px-6 py-7"
+        style={{
+          borderRadius: 'var(--r-xl)',
+          border: '1px solid var(--hairline-gold)',
+          boxShadow: 'var(--shadow-4), inset 0 0 0 2px rgba(232,185,107,0.22)',
+          background: 'repeating-linear-gradient(#fffdf8 0 30px, rgba(214,46,79,0.05) 30px 31px)',
+          outline: '1px solid rgba(232,185,107,0.25)',
+          outlineOffset: '-6px',
+        }}
+      >
+        <h2 className="mb-4 text-center font-display text-2xl text-cherry">
+          {story.letterTitle}
+        </h2>
+
+        <div className="whitespace-pre-line text-center font-hand text-xl leading-relaxed text-wine">
+          {story.letterText}
+        </div>
+
+        <p className="mt-5 text-center font-hand text-lg text-cherry">
+          {story.letterClosing}
+        </p>
+
+        <div className="mt-4 flex items-center justify-end gap-2">
+          <span className="h-px w-10 bg-gold/50" aria-hidden />
+          <span className="font-hand text-lg text-cherry">— {sender}</span>
+        </div>
+      </div>
+    </motion.div>
   )
 }
 
