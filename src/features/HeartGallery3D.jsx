@@ -144,8 +144,22 @@ export default function HeartGallery3D({ onBack }) {
     scene3.add(points)
 
     // ── เลย์เอาต์รูป: scatter / sphere / wall ──
-    const imgs = CONFIG.gallery
-    const n = imgs.length
+    // รูปมีจำกัด → ทำซ้ำ (สลับสับเปลี่ยน) ให้ครบจำนวนเยอะ ๆ ทรงลูกโลก/กำแพงจะแน่นเหมือนรูปโลก
+    const uniq = CONFIG.gallery
+    const U = uniq.length
+    const n = Math.max(U, 120) // จำนวนการ์ดจริงบนจอ
+    // สไตรด์แบบสัดส่วนทองคำ → เพื่อนบ้านไม่ซ้ำรูป และกระจายทั่วทั้งชุด
+    let stride = Math.max(1, Math.round(U / 1.61803))
+    while (U > 1 && gcd(stride, U) !== 1) stride = stride > 1 ? stride - 1 : 1
+    const order = Array.from({ length: n }, (_, k) => (k * stride) % U)
+    // โหลด texture ของรูป "ไม่ซ้ำ" ครั้งเดียว แล้วแชร์ให้การ์ดที่ใช้รูปเดียวกัน
+    const texCache = new Array(U).fill(null)
+    const texJobs = uniq.map((src, ui) =>
+      loadTexture(asset(src), `รูปที่ ${ui + 1}`, ui).then((r) => {
+        texCache[ui] = r
+        return r
+      })
+    )
 
     // กริดกำแพงภาพให้พอดีกรอบจอ
     const cols = Math.max(3, Math.round(Math.sqrt(n * (vW / vH))))
@@ -183,7 +197,7 @@ export default function HeartGallery3D({ onBack }) {
     const cards = []
     let disposed = false
 
-    imgs.forEach((src, i) => {
+    order.forEach((si, i) => {
       const card = new THREE.Group()
       card.position.copy(CENTER)
       card.scale.setScalar(0.01)
@@ -228,7 +242,7 @@ export default function HeartGallery3D({ onBack }) {
       group.add(card)
       cards.push(card)
 
-      loadTexture(asset(src), `รูปที่ ${i + 1}`, i).then(({ tex, aspect }) => {
+      texJobs[si].then(({ tex, aspect }) => {
         if (disposed) return
         imgMat.map = tex
         imgMat.color.set(0xffffff)
@@ -329,11 +343,9 @@ export default function HeartGallery3D({ onBack }) {
       renderer.dispose()
       scene3.traverse((o) => {
         if (o.geometry) o.geometry.dispose()
-        if (o.material) {
-          if (o.material.map) o.material.map.dispose()
-          o.material.dispose()
-        }
+        if (o.material) o.material.dispose()
       })
+      texCache.forEach((r) => r && r.tex.dispose()) // texture แชร์ → dispose ครั้งเดียว
       heartSprite.dispose()
       if (renderer.domElement.parentNode)
         renderer.domElement.parentNode.removeChild(renderer.domElement)
@@ -480,19 +492,9 @@ function FinaleLetter({ story, sender }) {
       initial={{ opacity: 0, scale: 0.8, y: 30 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 190, damping: 22 }}
-      className="relative w-full max-w-app"
+      className="w-full max-w-app"
     >
-      {/* ผีเสื้อสีชมพู */}
-      <motion.span
-        className="absolute -left-1 -top-6 z-10 text-4xl"
-        style={{ filter: 'hue-rotate(285deg) saturate(1.6) drop-shadow(0 3px 6px rgba(180,40,90,0.4))' }}
-        animate={{ y: [0, -6, 0], rotate: [-6, 6, -6] }}
-        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-        aria-hidden
-      >
-        🦋
-      </motion.span>
-
+      {/* ทุกอย่างอยู่ในกล่องเลื่อนเดียว → เลื่อนแล้วหัว (ผีเสื้อ+หัวข้อ) เลื่อนหายไปเหมือนกระดาษจริง */}
       <div
         className="max-h-[74dvh] overflow-y-auto px-6 py-7"
         style={{
@@ -504,6 +506,16 @@ function FinaleLetter({ story, sender }) {
           outlineOffset: '-6px',
         }}
       >
+        {/* ผีเสื้อสีชมพู — อยู่ในกระแสเลื่อน จะเลื่อนขึ้นหายไปพร้อมกระดาษ */}
+        <motion.div
+          className="mb-1 text-center text-4xl"
+          style={{ filter: 'hue-rotate(285deg) saturate(1.6) drop-shadow(0 3px 6px rgba(180,40,90,0.4))' }}
+          animate={{ y: [0, -6, 0], rotate: [-6, 6, -6] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          aria-hidden
+        >
+          🦋
+        </motion.div>
         <h2 className="mb-4 text-center font-display text-2xl text-cherry">
           {story.letterTitle}
         </h2>
@@ -523,6 +535,16 @@ function FinaleLetter({ story, sender }) {
       </div>
     </motion.div>
   )
+}
+
+// ห.ร.ม. — ใช้หาสไตรด์ที่ coprime กับจำนวนรูป (ทำซ้ำแล้วกระจายทั่ว ไม่ซ้ำติดกัน)
+function gcd(a, b) {
+  a = Math.abs(a)
+  b = Math.abs(b)
+  while (b) {
+    ;[a, b] = [b, a % b]
+  }
+  return a || 1
 }
 
 // สร้าง sprite หัวใจเล็กสำหรับ particles
